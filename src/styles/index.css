@@ -1,0 +1,141 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --color-primary: #3154df;
+  --color-primary-hover: #2744c4;
+  --color-deep: #151da4;
+  --color-electric: #4169ff;
+  --color-violet: #9b5cff;
+  --color-lavender: #e9edff;
+  --color-page: #f7f8ff;
+  --color-card: #ffffff;
+  --color-ink: #11142d;
+  --color-muted: #737b92;
+  --color-line: #e6e9f2;
+  --color-subtle: #f3f5fb;
+
+  --color-success: #22a06b;
+  --color-success-soft: #e7f6ef;
+  --color-warning: #e5a23b;
+  --color-warning-ink: #a86a0c;
+  --color-warning-soft: #fdf3e2;
+  --color-critical: #e25b63;
+  --color-critical-soft: #fdecee;
+
+  --shadow-card: 0 1px 2px rgba(17, 20, 45, 0.04), 0 4px 16px -6px rgba(49, 84, 223, 0.08);
+  --shadow-lift: 0 2px 4px rgba(17, 20, 45, 0.04), 0 16px 40px -12px rgba(49, 84, 223, 0.22);
+  --shadow-pop: 0 24px 64px -16px rgba(17, 20, 45, 0.28);
+
+  --radius-card: 18px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  ::selection {
+    background: #d9e0ff;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  input[type='number']::-webkit-inner-spin-button {
+    opacity: 0.4;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility text-gradient {
+  background: linear-gradient(100deg, #151da4 0%, #3154df 35%, #9b5cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #d6dbea transparent;
+}
+
+/* Iridescent decorative orb used on landing page and empty states */
+.orb {
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 22%),
+    radial-gradient(circle at 70% 75%, rgba(155, 92, 255, 0.9) 0%, rgba(155, 92, 255, 0) 55%),
+    radial-gradient(circle at 25% 80%, rgba(65, 105, 255, 0.95) 0%, rgba(65, 105, 255, 0) 55%),
+    conic-gradient(from 200deg at 50% 50%, #c9d4ff, #7f8cff, #4169ff, #9b5cff, #e0c8ff, #a8c4ff, #c9d4ff);
+  box-shadow:
+    inset -18px -24px 60px rgba(21, 29, 164, 0.35),
+    inset 14px 18px 40px rgba(255, 255, 255, 0.6),
+    0 40px 80px -30px rgba(65, 105, 255, 0.55);
+}
+
+.ring-iri {
+  background: conic-gradient(from 0deg, #4169ff, #9b5cff, #d9c4ff, #8fb0ff, #4169ff);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px));
+}
+
+.grid-fade {
+  background-image:
+    linear-gradient(to right, rgba(49, 84, 223, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(49, 84, 223, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(3deg);
+  }
+}
+.animate-float {
+  animation: float-slow 9s ease-in-out infinite;
+}
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-spin-slow {
+    animation: none;
+  }
+}
+
+/* Recharts polish */
+.recharts-cartesian-grid line {
+  stroke: #eef0f6;
+}
+.recharts-text {
+  fill: #737b92;
+  font-size: 12px;
+}
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none;
+}
