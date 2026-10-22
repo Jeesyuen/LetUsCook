@@ -72,16 +72,7 @@ export default function AutomationWorkflow() {
   const [workflow, setWorkflow] = useState<AutomationWorkflowData>(initialAutomationWorkflow)
   const [audit, setAudit] = useState<AutomationAuditEntry[]>(initialAutomationAudit)
   const [highlightedAuditIds, setHighlightedAuditIds] = useState<string[]>([])
-  const latestAuditRef = useRef<HTMLLIElement>(null)
-  const previousAuditCountRef = useRef(initialAutomationAudit.length)
   const highlightTimeoutRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (audit.length > previousAuditCountRef.current) {
-      latestAuditRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }
-    previousAuditCountRef.current = audit.length
-  }, [audit.length])
 
   useEffect(() => {
     if (highlightedAuditIds.length === 0) return
@@ -445,7 +436,6 @@ export default function AutomationWorkflow() {
             {audit.map((entry, index) => (
               <li
                 key={entry.id}
-                ref={index === 0 ? latestAuditRef : null}
                 className={cn(
                   'relative flex gap-3 rounded-xl pb-5 transition-all duration-500 last:pb-0',
                   highlightedAuditIds.includes(entry.id) &&'bg-lavender/70 px-2 py-2 ring-1 ring-primary/30',
