@@ -102,6 +102,8 @@ export interface Supplier {
   paymentTerms: string
   since: number
   about: string
+  /** Approximate road distance in km from business (Bangsar, KL) — Track 03A */
+  distanceKm?: number
 }
 
 export interface SupplierProduct {
@@ -111,6 +113,16 @@ export interface SupplierProduct {
   moq: number
   leadTimeDays: number
   deliveryFee: number
+}
+
+export interface LandedCostBreakdown {
+  subtotal: number
+  deliveryFee: number
+  totalLandedCost: number
+  landedUnitCost: number
+  baselineUnitCost?: number
+  costVariance?: number // savings (-) or premium (+) vs baseline
+  costVariancePct?: number
 }
 
 export interface Quotation {
@@ -127,6 +139,43 @@ export interface Quotation {
   paymentTerms: string
   expiresAt: string
   issuedAt: string
+  /** Detailed landed cost breakdown — Track 03A */
+  landedCost?: LandedCostBreakdown
+  /** Distance in km from business location — Track 03A */
+  distanceKm?: number
+  /** Whether requested quantity meets or exceeds MOQ — Track 03A */
+  meetsMoq?: boolean
+  /** Quick comparison highlight tags — Track 03A */
+  tags?: ('cheapest' | 'nearest' | 'fastest' | 'best-value')[]
+}
+
+export interface DiscoveryQuery {
+  productId?: string
+  query?: string
+  category?: ProductCategory | string
+  quantity?: number
+  maxDistanceKm?: number
+  maxLeadTimeDays?: number
+  mustMeetMoq?: boolean
+}
+
+export interface DiscoveredSupplierQuote {
+  quotation: Quotation
+  supplier: Supplier
+  product?: Product
+  supplierProduct?: SupplierProduct
+  distanceKm: number
+  meetsMoq: boolean
+  moqShortfall: number
+  landedCost: LandedCostBreakdown
+  tags: ('cheapest' | 'nearest' | 'fastest' | 'best-value')[]
+}
+
+export interface ComparisonHighlights {
+  cheapestSupplierId?: string
+  nearestSupplierId?: string
+  fastestSupplierId?: string
+  highestReliabilitySupplierId?: string
 }
 
 export type RiskLevel = 'High' | 'Medium' | 'Low'

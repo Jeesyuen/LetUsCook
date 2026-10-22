@@ -1,4 +1,4 @@
-import { Check, Clock, ShieldCheck, Star } from 'lucide-react'
+import { AlertCircle, Check, Clock, MapPin, ShieldCheck, Star, Tag, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { ScoredQuotation } from '@/services/scoring'
 import { criterionLabels, DELIVERY_PENALTY_PER_DAY, PRICE_PENALTY_PER_PCT } from '@/services/scoring'
@@ -38,8 +38,16 @@ export function QuoteCard({ item, unit, selected, onSelect }: { item: ScoredQuot
           <SupplierLogo supplier={s} />
           <div className="min-w-0">
             <div className="truncate text-[15px] font-semibold text-ink">{s.name}</div>
-            <div className="text-[12.5px] text-muted">
-              {s.location} · Rank #{item.rank}
+            <div className="flex items-center gap-1.5 text-[12.5px] text-muted">
+              <span>{s.location}</span>
+              {typeof (q.distanceKm ?? s.distanceKm) === 'number' && (
+                <>
+                  <span>·</span>
+                  <span>{q.distanceKm ?? s.distanceKm} km away</span>
+                </>
+              )}
+              <span>·</span>
+              <span>Rank #{item.rank}</span>
             </div>
           </div>
         </div>
@@ -49,6 +57,31 @@ export function QuoteCard({ item, unit, selected, onSelect }: { item: ScoredQuot
           </Badge>
         )}
       </div>
+
+      {(q.tags && q.tags.length > 0 || q.quantity < q.moq) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {q.tags?.includes('cheapest') && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+              <Tag className="h-3 w-3 stroke-[2.2]" /> Lowest Cost
+            </span>
+          )}
+          {q.tags?.includes('nearest') && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
+              <MapPin className="h-3 w-3 stroke-[2.2]" /> Nearest
+            </span>
+          )}
+          {q.tags?.includes('fastest') && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+              <Zap className="h-3 w-3 stroke-[2.2]" /> Fastest
+            </span>
+          )}
+          {q.quantity < q.moq && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+              <AlertCircle className="h-3 w-3 stroke-[2.2]" /> Below MOQ ({formatQty(q.moq, unit)})
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="mt-5 flex items-center gap-4">
         <CompatibilityScore score={item.score} size={best ? 84 : 72} highlight={best} />
@@ -64,8 +97,13 @@ export function QuoteCard({ item, unit, selected, onSelect }: { item: ScoredQuot
         <span className="text-[12.5px] text-muted">Total quotation</span>
         <span className="text-[22px] font-semibold tracking-tight text-ink tabular">{formatRM(q.total)}</span>
       </div>
-      <div className="mt-0.5 text-right text-[12px] text-muted">
-        {formatRM(q.unitPrice)}/{unit} · {q.deliveryFee ? `+${formatRM(q.deliveryFee)} delivery` : 'free delivery'}
+      <div className="mt-0.5 flex items-center justify-end gap-1.5 text-right text-[12px] text-muted">
+        <span>{formatRM(q.unitPrice)}/{unit} · {q.deliveryFee ? `+${formatRM(q.deliveryFee)} freight` : 'free freight'}</span>
+        {q.quantity > 0 && (
+          <span className="font-medium text-ink">
+            ({formatRM(q.total / q.quantity)}/{unit} landed)
+          </span>
+        )}
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-2.5 text-[12.5px]">

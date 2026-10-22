@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Plus, Search, SearchX } from 'lucide-react'
 import { useSuppliers } from '@/hooks/useDerived'
-import { supplierProducts } from '@/data/mockData'
+import { allSupplierProducts } from '@/data/supplierRegistry'
 import type { Supplier } from '@/types'
 import { SupplierCard } from '@/components/SupplierCard'
 import { AddSupplierModal, RequestQuotationModal } from '@/components/SupplierModals'
@@ -19,7 +19,7 @@ export default function Suppliers() {
 
   const categories = useMemo(() => [...new Set(suppliers.map((s) => s.category))], [suppliers])
   const states = useMemo(() => [...new Set(suppliers.map((s) => s.state))], [suppliers])
-  const count = (id: string) => supplierProducts.filter((sp) => sp.supplierId === id).length
+  const count = (id: string) => allSupplierProducts().filter((sp) => sp.supplierId === id).length
 
   const list = suppliers.filter((s) => {
     const t = q.trim().toLowerCase()
