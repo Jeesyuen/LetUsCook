@@ -169,6 +169,8 @@ export default function AutomationWorkflow() {
   const canReceiveResponse = workflow.dispatchStatus === 'Awaiting response'
   const isAwaitingApproval = workflow.approvalStatus === 'Pending'
   const isChangedTerms = workflow.dispatchStatus === 'Changed terms'
+  const isOrderClosed = workflow.dispatchStatus === 'Rejected' || workflow.dispatchStatus === 'Terms declined'
+  const canPrint = workflow.documentStatus === 'Generated' && !isOrderClosed
 
   const printPurchaseOrder = () => {
     const printWindow = window.open('', '_blank')
@@ -333,21 +335,23 @@ export default function AutomationWorkflow() {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={workflow.documentStatus !== 'Generated'}
+                      disabled={!canPrint}
                       onClick={printPurchaseOrder}
                     >
                       <Printer className="h-3.5 w-3.5" /> Print / Save as PDF
                     </Button>
                   </div>
                   <p className="mt-0.5 text-[12.5px] text-muted">
-                    {workflow.documentStatus === 'Generated'
-                      ? 'Generated from the approved request · 1 page · ready to attach'
-                      : workflow.documentStatus === 'Not generated'
-                        ? 'Request rejected · no document was created'
-                        : 'Document generation starts after manager approval'}
+                    {isOrderClosed
+                      ? 'Order closed · this purchase order is void and can no longer be printed'
+                      : workflow.documentStatus === 'Generated'
+                        ? 'Generated from the approved request · 1 page · ready to attach'
+                        : workflow.documentStatus === 'Not generated'
+                          ? 'Request rejected · no document was created'
+                          : 'Document generation starts after manager approval'}
                   </p>
                 </div>
-                {workflow.documentStatus === 'Generated' && <Badge tone="success"><Check className="h-3 w-3" /> Ready</Badge>}
+                {isOrderClosed ? <Badge tone="critical"><X className="h-3 w-3" /> Void</Badge> : workflow.documentStatus === 'Generated' && <Badge tone="success"><Check className="h-3 w-3" /> Ready</Badge>}
               </div>
             </div>
           </Card>
