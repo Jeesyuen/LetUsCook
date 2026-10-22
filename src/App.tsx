@@ -12,7 +12,7 @@ const Quotations = lazy(() => import('@/pages/app/Quotations'))
 const Recommendations = lazy(() => import('@/pages/app/Recommendations'))
 const Approvals = lazy(() => import('@/pages/app/Approvals'))
 const PurchaseOrders = lazy(() => import('@/pages/app/PurchaseOrders'))
-const AutomationWorkflow = lazy(() => import('@/components/AutomationWorkflow'))
+const AutomationWorkflow = lazy(() => import('@/pages/app/AutomationWorkflow'))
 const Activity = lazy(() => import('@/pages/app/Activity'))
 const Settings = lazy(() => import('@/pages/app/Settings'))
 
