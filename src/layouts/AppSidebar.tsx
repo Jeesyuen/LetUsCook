@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Boxes, Building2, ChartLine, Check, ChevronsUpDown, ClipboardCheck, FileText, Globe, History, LayoutDashboard, LogOut, RotateCcw, Settings, ShoppingCart, Sparkles, Truck, X, type LucideIcon } from 'lucide-react'
+import { Boxes, Building2, ChartLine, Check, ChevronsUpDown, ClipboardCheck, FileText, Globe, History, LayoutDashboard, LogOut, RotateCcw, Settings, ShoppingCart, Sparkles, Truck, Workflow, X, type LucideIcon } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Menu } from '@/components/ui/Menu'
 import { ConfirmDialog } from '@/components/ui/Overlay'
@@ -35,6 +35,7 @@ export function AppSidebar({ onNavigate, onClose }: { onNavigate?: () => void; o
         { to: '/app/recommendations', label: 'AI Recommendations', icon: Sparkles, badge: recs },
         { to: '/app/approvals', label: 'Approvals', icon: ClipboardCheck, badge: pendingApprovals },
         { to: '/app/purchase-orders', label: 'Purchase Orders', icon: ShoppingCart },
+        { to: '/app/automation', label: 'Automation', icon: Workflow },
       ],
     },
     {
