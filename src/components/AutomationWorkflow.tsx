@@ -332,7 +332,7 @@ export default function AutomationWorkflow() {
                       disabled={workflow.documentStatus !== 'Generated'}
                       onClick={printPurchaseOrder}
                     >
-                      <Printer className="h-3.5 w-3.5" /> Download PDF
+                      <Printer className="h-3.5 w-3.5" /> Print / Save as PDF
                     </Button>
                   </div>
                   <p className="mt-0.5 text-[12.5px] text-muted">
