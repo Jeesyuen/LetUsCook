@@ -393,6 +393,8 @@ export default function AutomationWorkflow() {
                     <Button size="sm" variant="outline" onClick={() => simulateResponse('changed-terms')}><ArrowRight className="h-4 w-4" /> Send changed terms</Button>
                   </div>
                 </div>
+              ) : workflow.approvalStatus === 'Rejected' ? (
+                <p className="flex items-center gap-2 text-[12.5px] text-muted"><X className="h-4 w-4" /> Request rejected · there is no purchase order to dispatch.</p>
               ) : workflow.dispatchStatus === 'Not sent' ? (
                 <p className="flex items-center gap-2 text-[12.5px] text-muted"><Clock3 className="h-4 w-4" /> Approve the request to generate the PO and enable dispatch.</p>
               ) : isChangedTerms ? (
