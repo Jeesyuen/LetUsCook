@@ -71,7 +71,7 @@ function initials(name: string) {
 export default function AutomationWorkflow() {
   const [workflow, setWorkflow] = useState<AutomationWorkflowData>(initialAutomationWorkflow)
   const [audit, setAudit] = useState<AutomationAuditEntry[]>(initialAutomationAudit)
-  const [highlightedAuditId, setHighlightedAuditId] = useState<string | null>(null)
+  const [highlightedAuditIds, setHighlightedAuditIds] = useState<string[]>([])
   const latestAuditRef = useRef<HTMLLIElement>(null)
   const previousAuditCountRef = useRef(initialAutomationAudit.length)
   const highlightTimeoutRef = useRef<number | null>(null)
@@ -84,12 +84,12 @@ export default function AutomationWorkflow() {
   }, [audit.length])
 
   useEffect(() => {
-    if (!highlightedAuditId) return
-    highlightTimeoutRef.current = window.setTimeout(() => setHighlightedAuditId(null), 1600)
+    if (highlightedAuditIds.length === 0) return
+    highlightTimeoutRef.current = window.setTimeout(() => setHighlightedAuditIds([]), 1600)
     return () => {
       if (highlightTimeoutRef.current !== null) window.clearTimeout(highlightTimeoutRef.current)
     }
-  }, [highlightedAuditId])
+  }, [highlightedAuditIds])
 
   const record = (actor: string, event: string, detail: string, tone: AutomationAuditEntry['tone'] = 'neutral') => {
     const entry: AutomationAuditEntry = {
@@ -101,7 +101,7 @@ export default function AutomationWorkflow() {
       tone,
     }
     setAudit((entries) => [entry, ...entries])
-    setHighlightedAuditId(entry.id)
+    setHighlightedAuditIds((ids) => [...ids, entry.id])
   }
 
   const approve = () => {
@@ -444,7 +444,7 @@ export default function AutomationWorkflow() {
                 ref={index === 0 ? latestAuditRef : null}
                 className={cn(
                   'relative flex gap-3 rounded-xl pb-5 transition-all duration-500 last:pb-0',
-                  highlightedAuditId === entry.id && 'bg-lavender/70 px-2 py-2 ring-1 ring-primary/30',
+                  highlightedAuditIds.includes(entry.id) &&'bg-lavender/70 px-2 py-2 ring-1 ring-primary/30',
                 )}
               >
                 {index < audit.length - 1 && <span className="absolute top-7 bottom-0 left-[13px] w-px bg-line" />}
