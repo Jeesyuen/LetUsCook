@@ -64,6 +64,10 @@ function escapeHtml(value: string) {
   })
 }
 
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0].toUpperCase()).join('')
+}
+
 export default function AutomationWorkflow() {
   const [workflow, setWorkflow] = useState<AutomationWorkflowData>(initialAutomationWorkflow)
   const [audit, setAudit] = useState<AutomationAuditEntry[]>(initialAutomationAudit)
@@ -357,7 +361,7 @@ export default function AutomationWorkflow() {
             <div className="space-y-4 px-5 pb-5 pt-4 sm:px-6">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line p-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lavender text-[12px] font-semibold text-primary">BC</div>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lavender text-[12px] font-semibold text-primary">{initials(workflow.supplier)}</div>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-ink">{workflow.supplier}</div>
                     <div className="text-[12px] text-muted">{workflow.supplierContact} · {workflow.email}</div>
