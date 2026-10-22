@@ -28,7 +28,7 @@ import {
   type DispatchChannel,
   type SupplierResponse,
 } from '@/data/automationData'
-import { cn, formatQty, formatRM } from '@/utils/format'
+import { cn, formatQty, formatRM, uid } from '@/utils/format'
 
 const approvalTone = {
   Pending: 'warning',
@@ -93,7 +93,7 @@ export default function AutomationWorkflow() {
 
   const record = (actor: string, event: string, detail: string, tone: AutomationAuditEntry['tone'] = 'neutral') => {
     const entry: AutomationAuditEntry = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: uid('audit'),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       actor,
       event,
