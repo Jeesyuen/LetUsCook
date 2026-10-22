@@ -1,0 +1,6 @@
+export * from './types'
+export * from './config'
+export { compareSuppliers, rankSuppliers, eligibilityIssues, normalise, validateRequest, MatchingValidationError, PRICE_PENALTY_PER_PCT, DELIVERY_SMOOTHING_DAYS, DISTANCE_SMOOTHING_KM } from './scoring'
+export { explainSupplier, recommendationSummary } from './explain'
+export { buildProcurementAdvice, assignCategories, categoryLabels } from './advisor'
+export { compareSuppliersEndpoint, parseCompareRequest, type SupplierDataSource } from './api'
