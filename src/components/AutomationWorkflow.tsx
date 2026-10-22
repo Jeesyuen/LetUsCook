@@ -48,6 +48,7 @@ const dispatchTone = {
   Accepted: 'success',
   Rejected: 'critical',
   'Changed terms': 'warning',
+  'Terms declined': 'critical',
 } as const
 
 function escapeHtml(value: string) {
@@ -147,8 +148,7 @@ export default function AutomationWorkflow() {
   const resolveRevisedTerms = (accepted: boolean) => {
     setWorkflow((current) => ({
       ...current,
-      response: accepted ? 'accept' : 'reject',
-      dispatchStatus: accepted ? 'Accepted' : 'Rejected',
+      dispatchStatus: accepted ? 'Accepted' : 'Terms declined',
       ...(accepted && {
         total: current.revisedTotal,
         expectedDelivery: current.revisedDelivery,
@@ -415,8 +415,16 @@ export default function AutomationWorkflow() {
                 <div className={cn('flex items-start gap-3 rounded-xl p-3.5 text-[13px]', workflow.dispatchStatus === 'Accepted' ? 'bg-success-soft' : 'bg-critical-soft')}>
                   {workflow.dispatchStatus === 'Accepted' ? <CheckCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" /> : <X className="mt-0.5 h-4 w-4 shrink-0 text-critical" />}
                   <div>
-                    <div className="font-medium text-ink">{workflow.dispatchStatus === 'Accepted' ? 'Supplier confirmed the order' : 'Supplier declined the order'}</div>
-                    <div className="mt-0.5 text-muted">{workflow.dispatchStatus === 'Accepted' ? 'The PO is confirmed at the agreed terms.' : 'The order is closed. Review another supplier before proceeding.'}</div>
+                    <div className="font-medium text-ink">
+                      {workflow.dispatchStatus === 'Accepted' ? 'Supplier confirmed the order' : workflow.dispatchStatus === 'Terms declined' ? 'You declined the revised terms' : 'Supplier declined the order'}
+                    </div>
+                    <div className="mt-0.5 text-muted">
+                      {workflow.dispatchStatus === 'Accepted'
+                        ? 'The PO is confirmed at the agreed terms.'
+                        : workflow.dispatchStatus === 'Terms declined'
+                          ? 'The supplier’s changed price and delivery date were not accepted, so the order is closed.'
+                          : 'The order is closed. Review another supplier before proceeding.'}
+                    </div>
                   </div>
                 </div>
               )}

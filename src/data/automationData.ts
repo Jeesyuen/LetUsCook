@@ -1,7 +1,7 @@
 export type ManagerApprovalStatus = 'Pending' | 'Approved' | 'Rejected'
 export type PurchaseOrderDocumentStatus = 'Awaiting approval' | 'Generated' | 'Not generated'
 export type DispatchChannel = 'WhatsApp' | 'Email'
-export type DispatchStatus = 'Not sent' | 'Awaiting response' | 'Accepted' | 'Rejected' | 'Changed terms'
+export type DispatchStatus = 'Not sent' | 'Awaiting response' | 'Accepted' | 'Rejected' | 'Changed terms' | 'Terms declined'
 export type SupplierResponse = 'accept' | 'reject' | 'changed-terms'
 
 export interface AutomationWorkflowData {
