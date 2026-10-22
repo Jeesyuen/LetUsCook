@@ -3,7 +3,7 @@ import { useAppStore, OPEN_PO_STATUSES } from '@/store/useAppStore'
 import { computeForecast, type Forecast } from '@/services/forecasting'
 import { buildQuotations, scoreQuotations, weightsFor, type ScoredQuotation } from '@/services/scoring'
 import { explainRecommendation, type Explanation } from '@/services/explanations'
-import { suppliers as seededSuppliers } from '@/data/mockData'
+import { supplierProducts, suppliers as seededSuppliers } from '@/data/mockData'
 import type { ApprovalRequest, Product, PurchaseOrder } from '@/types'
 
 export interface ProductWithForecast {
@@ -16,8 +16,11 @@ export function useForecasts(): ProductWithForecast[] {
   const pos = useAppStore((s) => s.purchaseOrders)
   const coverageDays = useAppStore((s) => s.settings.coverageDays)
   return useMemo(() => {
-    const incoming = (id: string) => pos.filter((p) => p.productId === id && OPEN_PO_STATUSES.includes(p.status)).reduce((sum, p) => sum + p.quantity, 0)
-    return products.map((product) => ({ product, forecast: computeForecast(product, coverageDays, incoming(product.id)) }))
+    const incoming = (id: string) => pos.filter((p) => p.productId === id && OPEN_PO_STATUSES.includes(p.status))
+    return products.map((product) => {
+      const minimumOrderQty = supplierProducts.find((sp) => sp.productId === product.id && sp.supplierId === product.reorder.preferredSupplierId)?.moq ?? 0
+      return { product, forecast: computeForecast(product, coverageDays, incoming(product.id), undefined, minimumOrderQty) }
+    })
   }, [products, pos, coverageDays])
 }
 

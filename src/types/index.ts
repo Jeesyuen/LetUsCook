@@ -51,6 +51,8 @@ export interface Product {
   grossProfitPerUnit: number
   /** Daily consumption for the last 14 days, oldest first */
   usageHistory: number[]
+  /** Provenance of usageHistory; unset legacy data is treated as unverified */
+  usageHistorySource?: 'simulated' | 'recorded' | 'baseline'
   /** End-of-day stock for the last 14 days, oldest first (yesterday last) */
   stockHistory: number[]
   /** Rounding step for purchase quantities, e.g. 10 kg bags */

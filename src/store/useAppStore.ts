@@ -16,6 +16,7 @@ import {
   seedProductsAndMovements,
   seedPurchaseOrders,
   seedQuotationHistory,
+  supplierProducts,
   SYSTEM_USER,
   type QuotationHistoryEntry,
 } from '@/data/mockData'
@@ -152,8 +153,10 @@ function notification(title: string, body: string, tone: ActivityTone, link?: st
 
 /** Raises a risk activity + notification when a product newly becomes Critical / Out of Stock. */
 function riskEvents(s: DemoData, before: Product, after: Product): { acts: ActivityLog[]; notes: AppNotification[] } {
-  const fb = computeForecast(before, s.settings.coverageDays)
-  const fa = computeForecast(after, s.settings.coverageDays)
+  const incoming = s.purchaseOrders.filter((po) => po.productId === after.id && OPEN_PO_STATUSES.includes(po.status))
+  const minimumOrderQty = supplierProducts.find((sp) => sp.productId === after.id && sp.supplierId === after.reorder.preferredSupplierId)?.moq ?? 0
+  const fb = computeForecast(before, s.settings.coverageDays, incoming, undefined, minimumOrderQty)
+  const fa = computeForecast(after, s.settings.coverageDays, incoming, undefined, minimumOrderQty)
   if (fa.risk === 'High' && fb.risk !== 'High') {
     return {
       acts: [activity('risk_detected', 'Inventory risk detected', `${after.name} is now ${fa.status.toLowerCase()} with ~${fa.daysRemaining} days of cover.`, 'critical', SYSTEM_USER, { productId: after.id })],
@@ -184,6 +187,7 @@ export const useAppStore = create<AppState>()(
           currentStock: input.currentStock, unitCost: input.unitCost, grossProfitPerUnit: input.grossProfitPerUnit, orderMultiple: Math.max(1, input.orderMultiple),
           // New items have no history yet: a single baseline usage value drives a simple baseline forecast
           usageHistory: input.dailyUsage > 0 ? [input.dailyUsage] : [],
+          usageHistorySource: 'baseline',
           stockHistory: [],
           supplierIds: input.preferredSupplierId ? [input.preferredSupplierId] : [],
           reorder: {
@@ -481,7 +485,9 @@ export const useAppStore = create<AppState>()(
           const now = nowIso()
           const newStock = round(product.currentStock + receivedQty, 2)
           const updatedProduct = { ...product, currentStock: newStock }
-          const f = computeForecast(updatedProduct, s.settings.coverageDays)
+          const remainingOrders = s.purchaseOrders.filter((p) => p.id !== poId && p.productId === product.id && OPEN_PO_STATUSES.includes(p.status))
+          const minimumOrderQty = supplierProducts.find((sp) => sp.productId === product.id && sp.supplierId === product.reorder.preferredSupplierId)?.moq ?? 0
+          const f = computeForecast(updatedProduct, s.settings.coverageDays, remainingOrders, undefined, minimumOrderQty)
           const short = receivedQty < po.quantity
           return {
             products: s.products.map((p) => (p.id === product.id ? updatedProduct : p)),
@@ -558,4 +564,3 @@ export const useAppStore = create<AppState>()(
     },
   ),
 )
-

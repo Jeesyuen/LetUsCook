@@ -5,11 +5,20 @@ import { useAppStore } from '@/store/useAppStore'
 import { useForecasts, useOpenPOFor, useRiskRanking } from '@/hooks/useDerived'
 import { buildForecastSeries, EXPOSURE_BUFFER_DAYS, explainForecast, grossProfitAtRisk } from '@/services/forecasting'
 import { ChartLegend, ForecastChart } from '@/components/charts/ForecastChart'
+import { UsageForecastChart } from '@/components/charts/UsageForecastChart'
 import { ProductThumb, RiskBadge, StatCard, StockStatusBadge } from '@/components/common'
-import { Card, CardHeader, InfoTip, PageHeader } from '@/components/ui/primitives'
+import { Card, CardHeader, EmptyState, InfoTip, PageHeader } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { formatDate, formatShortDate } from '@/utils/date'
 import { cn, formatQty, formatRM, formatRM0 } from '@/utils/format'
+import type { HistorySource } from '@/services/forecasting'
+
+const HISTORY_SOURCE_LABEL: Record<HistorySource, string> = {
+  simulated: 'Simulated demo history',
+  recorded: 'Recorded usage history',
+  baseline: 'Single-entry baseline estimate',
+  unverified: 'History source unverified',
+}
 
 export default function Forecasting() {
   const navigate = useNavigate()
@@ -25,11 +34,25 @@ export default function Forecasting() {
   const series = useMemo(() => (selected ? buildForecastSeries(selected.product, selected.forecast, openPO) : null), [selected, openPO])
 
   const atRisk = all.filter((x) => x.forecast.status !== 'Healthy').length
-  const stockouts = all.filter((x) => x.forecast.daysRemaining <= 14 && x.forecast.incoming === 0).length
+  const critical = all.filter((x) => x.forecast.risk === 'High')
+  const stockouts = all.filter((x) => x.forecast.status === 'Out of Stock' || x.forecast.daysRemaining <= 14).length
   const upcoming = all.filter((x) => x.forecast.daysUntilReorder <= 7 && x.forecast.suggestedQty > 0).length
   const gpRisk = all.reduce((sum, x) => sum + grossProfitAtRisk(x.product, x.forecast), 0)
 
-  if (!selected || !series) return null
+  if (!selected || !series)
+    return (
+      <div>
+        <PageHeader title="Inventory Forecasting" subtitle="Know what you'll need before you run out." />
+        <Card>
+          <EmptyState
+            icon={<PackageX className="h-7 w-7" />}
+            title="No forecast data available"
+            description="Add an inventory product to start reviewing stock forecasts."
+            action={<Button onClick={() => navigate('/app/inventory')}>View inventory</Button>}
+          />
+        </Card>
+      </div>
+    )
   const { product, forecast } = selected
   const pending = approvals.find((a) => a.productId === product.id && a.status === 'Pending')
   const select = (id: string) => setParams({ product: id }, { replace: true })
@@ -39,6 +62,7 @@ export default function Forecasting() {
   const details = [
     { label: 'Current stock', value: formatQty(product.currentStock, product.unit) },
     { label: 'Average daily usage', value: formatQty(forecast.avgDailyUsage, product.unit) },
+    { label: 'Daily usage variability', value: forecast.usageStdDev === null ? 'Insufficient history' : `${formatQty(forecast.usageStdDev, product.unit)}/day` },
     { label: 'Estimated days remaining', value: forecast.daysRemaining >= 999 ? '—' : `${forecast.daysRemaining} days` },
     { label: 'Predicted stockout date', value: forecast.stockoutDate ? formatDate(forecast.stockoutDate) : '—' },
     { label: 'Supplier lead time', value: `${forecast.leadTimeDays} days` },
@@ -52,9 +76,11 @@ export default function Forecasting() {
     <div>
       <PageHeader title="Inventory Forecasting" subtitle="Know what you'll need before you run out." />
 
-      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-6">
+        <StatCard label="Inventory Items" value={all.length} icon={<ClipboardCheck />} hint="Products currently tracked" onClick={() => navigate('/app/inventory')} />
         <StatCard label="Products at Risk" value={atRisk} icon={<TriangleAlert />} hint="Critical or below reorder point" onClick={() => navigate('/app/inventory')} />
-        <StatCard label="Forecasted Stockouts" value={stockouts} icon={<PackageX />} hint="Within 14 days, no open order" />
+        <StatCard label="Critical Alerts" value={critical.length} icon={<PackageX />} hint="Stockout risk needs action" />
+        <StatCard label="Forecasted Stockouts" value={stockouts} icon={<PackageX />} hint="Within 14 days, including open orders" />
         <StatCard label="Upcoming Reorders" value={upcoming} icon={<CalendarClock />} hint="Reorder date within 7 days" onClick={() => navigate('/app/recommendations')} />
         <StatCard
           label="Est. Gross Profit at Risk"
@@ -70,6 +96,26 @@ export default function Forecasting() {
           }
         />
       </div>
+
+      {critical.length > 0 && (
+        <Card className="mb-5 border-critical/30 bg-critical-soft/40 p-4 sm:p-5">
+          <div className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-[#a7353d]">
+            <TriangleAlert className="h-4 w-4" /> Critical stock alerts
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {critical.map(({ product: item, forecast: itemForecast }) => (
+              <button
+                key={item.id}
+                onClick={() => select(item.id)}
+                className="rounded-xl border border-critical/20 bg-white/80 p-3 text-left transition hover:bg-white"
+              >
+                <span className="block text-[13px] font-semibold text-ink">{item.name}</span>
+                <span className="mt-1 block text-[12px] leading-relaxed text-muted">{itemForecast.riskReason}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
         {ranking.map((x) => {
@@ -105,7 +151,7 @@ export default function Forecasting() {
                 {product.name} <StockStatusBadge status={forecast.status} />
               </span>
             }
-            subtitle={forecast.isBaseline ? 'Baseline forecast from estimated usage — history is still building.' : 'Daily stock level: 14 days of history and a 21-day projection.'}
+            subtitle={`${HISTORY_SOURCE_LABEL[forecast.historySource]} · ${forecast.isBaseline ? 'not enough history for trend or variability analysis.' : '14-day stock history with a 21-day projection.'}`}
             action={<RiskBadge risk={forecast.risk} />}
           />
           <div className="px-3 pt-4 pb-5 sm:px-4">
@@ -143,9 +189,7 @@ export default function Forecasting() {
                 <div className="mt-1 text-[12.5px] text-muted">
                   ≈ {formatRM(forecast.suggestedQty * product.unitCost)} at current unit cost · order by {forecast.daysUntilReorder <= 0 ? 'today' : formatShortDate(forecast.reorderDate)}
                 </div>
-                <div className="mt-3 text-[12px] leading-relaxed text-[#8a91a8]">
-                  {formatQty(forecast.avgDailyUsage)} × ({forecast.leadTimeDays} lead + {coverageDays} coverage days) + {formatQty(forecast.safetyStock)} safety − {formatQty(product.currentStock)} on hand{forecast.incoming ? ` − ${formatQty(forecast.incoming)} incoming` : ''}, rounded to {formatQty(product.orderMultiple, product.unit)} packs
-                </div>
+                <div className="mt-3 text-[12px] leading-relaxed text-[#8a91a8]">{forecast.recommendationReason}</div>
               </div>
             )}
 
@@ -180,10 +224,10 @@ export default function Forecasting() {
             <h4 className="text-[13.5px] font-semibold text-ink">How this forecast works</h4>
             <ul className="mt-3 space-y-2.5 text-[12.5px] leading-relaxed text-muted">
               <li>
-                <span className="font-medium text-ink">Days remaining</span> = current stock ÷ average daily usage
+                <span className="font-medium text-ink">Days remaining</span> = projected stock after dated incoming orders ÷ forecast daily usage
               </li>
               <li>
-                <span className="font-medium text-ink">Reorder point</span> = daily usage × lead time + safety stock
+                <span className="font-medium text-ink">Reorder point</span> = forecast daily usage × lead time + safety stock
               </li>
               <li>
                 <span className="font-medium text-ink">Suggested quantity</span> covers the lead time plus {coverageDays} days, net of stock on hand and open orders
@@ -193,6 +237,77 @@ export default function Forecasting() {
           </Card>
         </div>
       </div>
+
+      <Card className="mt-6 overflow-hidden">
+        <CardHeader
+          title="Detailed inventory forecast"
+          subtitle="Stockout estimates include dated open purchase orders. Select a product to inspect its chart and recommendation."
+        />
+        <div className="overflow-x-auto scrollbar-thin">
+          <table className="w-full min-w-[1320px] text-left text-[13px]">
+            <thead>
+              <tr className="border-y border-line bg-[#fafbfe] text-[12px] text-muted">
+                <th className="py-3 pr-3 pl-5 font-medium">Product</th>
+                <th className="px-3 text-right font-medium">Current stock</th>
+                <th className="px-3 text-right font-medium">Avg daily usage</th>
+                <th className="px-3 text-right font-medium">Days until stockout</th>
+                <th className="px-3 font-medium">Predicted stockout</th>
+                <th className="px-3 text-right font-medium">Lead time</th>
+                <th className="px-3 text-right font-medium">Reorder point</th>
+                <th className="px-3 text-right font-medium">Recommended order</th>
+                <th className="px-3 pr-5 font-medium">Risk & reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranking.map(({ product: item, forecast: itemForecast }) => (
+                <tr
+                  key={item.id}
+                  onClick={() => select(item.id)}
+                  className={cn('cursor-pointer border-b border-line/70 align-top transition last:border-0 hover:bg-[#f8f9ff]', item.id === product.id && 'bg-lavender/50')}
+                >
+                  <td className="py-3.5 pr-3 pl-5">
+                    <span className="block font-semibold text-ink">{item.name}</span>
+                    <span className="mt-0.5 block text-[11.5px] text-muted">{HISTORY_SOURCE_LABEL[itemForecast.historySource]}</span>
+                  </td>
+                  <td className="px-3 py-3.5 text-right font-medium tabular">{formatQty(item.currentStock, item.unit)}</td>
+                  <td className="px-3 py-3.5 text-right tabular">
+                    <span className="block">{formatQty(itemForecast.avgDailyUsage, item.unit)}</span>
+                    {itemForecast.trendPct !== null && (
+                      <span className="text-[11.5px] text-muted">{itemForecast.trendPct > 0 ? '+' : ''}{itemForecast.trendPct}% recent trend</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3.5 text-right tabular">{itemForecast.daysRemaining >= 999 ? '—' : `${itemForecast.daysRemaining} days`}</td>
+                  <td className="px-3 py-3.5 tabular">{itemForecast.stockoutDate ? formatDate(itemForecast.stockoutDate) : 'Not estimated'}</td>
+                  <td className="px-3 py-3.5 text-right tabular">{itemForecast.leadTimeDays} days</td>
+                  <td className="px-3 py-3.5 text-right tabular">{formatQty(itemForecast.reorderPoint, item.unit)}</td>
+                  <td className="px-3 py-3.5 text-right tabular">
+                    <span className="block font-semibold">{itemForecast.suggestedQty > 0 ? formatQty(itemForecast.suggestedQty, item.unit) : 'None'}</span>
+                    <span className="block max-w-[220px] whitespace-normal text-[11px] leading-relaxed text-muted">{itemForecast.recommendationReason}</span>
+                  </td>
+                  <td className="px-3 py-3.5 pr-5">
+                    <RiskBadge risk={itemForecast.risk} />
+                    <span className="mt-1.5 block max-w-[260px] whitespace-normal text-[11.5px] leading-relaxed text-muted">{itemForecast.riskReason}</span>
+                    {itemForecast.limitation && (
+                      <span className="mt-1 block max-w-[260px] whitespace-normal text-[11px] leading-relaxed text-warning-ink">{itemForecast.limitation}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t border-line px-5 py-3 text-[12px] text-muted">
+          Generated usage history is labeled simulated; unverified legacy data is not represented as confirmed historical records. Dates are estimates based on current forecasts.
+        </div>
+      </Card>
+
+      <Card className="mt-6 overflow-hidden">
+        <CardHeader
+          title="Historical vs forecast daily usage"
+          subtitle={`${HISTORY_SOURCE_LABEL[forecast.historySource]} · observed daily usage is compared with the next 7 days at the current forecast rate.`}
+        />
+        <UsageForecastChart product={product} forecast={forecast} />
+      </Card>
     </div>
   )
 }
