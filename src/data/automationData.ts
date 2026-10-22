@@ -14,9 +14,10 @@ export interface AutomationWorkflowData {
   whatsapp: string
   email: string
   product: string
-  quantity: string
+  quantity: number
+  unit: string
   unitPrice: number
-  total: string
+  total: number
   expectedDelivery: string
   paymentTerms: string
   approvalStatus: ManagerApprovalStatus
@@ -24,7 +25,7 @@ export interface AutomationWorkflowData {
   dispatchStatus: DispatchStatus
   channel: DispatchChannel | null
   response: SupplierResponse | null
-  revisedTotal: string
+  revisedTotal: number
   revisedDelivery: string
 }
 
@@ -47,9 +48,10 @@ export const initialAutomationWorkflow: AutomationWorkflowData = {
   whatsapp: '+60 12-334 8812',
   email: 'orders@beancraft.example.my',
   product: 'Colombian Arabica Coffee Beans',
-  quantity: '12 kg',
+  quantity: 12,
+  unit: 'kg',
   unitPrice: 104,
-  total: 'RM 1,248.00',
+  total: 1248,
   expectedDelivery: '28 Oct 2026',
   paymentTerms: 'Net 30',
   approvalStatus: 'Pending',
@@ -57,7 +59,7 @@ export const initialAutomationWorkflow: AutomationWorkflowData = {
   dispatchStatus: 'Not sent',
   channel: null,
   response: null,
-  revisedTotal: 'RM 1,310.40',
+  revisedTotal: 1310.4,
   revisedDelivery: '31 Oct 2026',
 }
 

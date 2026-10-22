@@ -28,7 +28,7 @@ import {
   type DispatchChannel,
   type SupplierResponse,
 } from '@/data/automationData'
-import { cn } from '@/utils/format'
+import { cn, formatQty, formatRM } from '@/utils/format'
 
 const approvalTone = {
   Pending: 'warning',
@@ -62,10 +62,6 @@ function escapeHtml(value: string) {
     }
     return entities[character]
   })
-}
-
-function parseCurrency(value: string) {
-  return Number.parseFloat(value.replace(/[^\d.-]/g, ''))
 }
 
 export default function AutomationWorkflow() {
@@ -152,14 +148,14 @@ export default function AutomationWorkflow() {
       ...(accepted && {
         total: current.revisedTotal,
         expectedDelivery: current.revisedDelivery,
-        unitPrice: parseCurrency(current.revisedTotal) / Number.parseFloat(current.quantity),
+        unitPrice: current.revisedTotal / current.quantity,
       }),
     }))
     record(
       `${workflow.managerName} · Manager`,
       accepted ? 'Revised terms accepted' : 'Revised terms declined',
       accepted
-        ? `Approved the revised total of ${workflow.revisedTotal} and delivery date of ${workflow.revisedDelivery}.`
+        ? `Approved the revised total of ${formatRM(workflow.revisedTotal)} and delivery date of ${workflow.revisedDelivery}.`
         : 'Declined the supplier’s revised terms. The order will not proceed.',
       accepted ? 'success' : 'critical',
     )
@@ -177,17 +173,16 @@ export default function AutomationWorkflow() {
       return
     }
 
-    const unit = workflow.quantity.replace(/^[\d,.]+\s*/, '')
     const unitPrice = Number.isFinite(workflow.unitPrice)
-      ? `RM ${workflow.unitPrice.toFixed(2)}${unit ? ` / ${escapeHtml(unit)}` : ''}`
+      ? `${formatRM(workflow.unitPrice)}${workflow.unit ? ` / ${escapeHtml(workflow.unit)}` : ''}`
       : '—'
     const date = new Intl.DateTimeFormat('en-MY', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date())
     const poNumber = escapeHtml(workflow.poNumber)
     const supplier = escapeHtml(workflow.supplier)
     const product = escapeHtml(workflow.product)
-    const formattedQuantity = escapeHtml(workflow.quantity)
+    const formattedQuantity = escapeHtml(formatQty(workflow.quantity, workflow.unit))
     const paymentTerms = escapeHtml(workflow.paymentTerms)
-    const totalAmount = escapeHtml(workflow.total)
+    const totalAmount = escapeHtml(formatRM(workflow.total))
     const managerName = escapeHtml(workflow.managerName)
     const approvalStatus = escapeHtml(workflow.approvalStatus)
     const approvalSignature = workflow.approvalStatus === 'Approved'
@@ -297,7 +292,7 @@ export default function AutomationWorkflow() {
             <div className="grid gap-4 px-5 pb-5 pt-4 sm:grid-cols-[1fr_auto] sm:items-center sm:px-6">
               <div className="rounded-xl border border-line bg-[#fbfbfe] p-4">
                 <div className="font-semibold text-ink">{workflow.product}</div>
-                <div className="mt-1 text-[13px] text-muted">{workflow.quantity} · {workflow.total} · {workflow.supplier}</div>
+                <div className="mt-1 text-[13px] text-muted">{formatQty(workflow.quantity, workflow.unit)} · {formatRM(workflow.total)} · {workflow.supplier}</div>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12.5px] text-muted">
                   <span>Delivery: {workflow.expectedDelivery}</span>
                   <span>Terms: {workflow.paymentTerms}</span>
@@ -403,7 +398,7 @@ export default function AutomationWorkflow() {
                     <Activity className="mt-0.5 h-4 w-4 shrink-0 text-warning-ink" />
                     <div>
                       <div className="text-[13px] font-semibold text-ink">Supplier proposed changed terms</div>
-                      <p className="mt-1 text-[12.5px] text-muted">Total: {workflow.revisedTotal} · Delivery: {workflow.revisedDelivery}</p>
+                      <p className="mt-1 text-[12.5px] text-muted">Total: {formatRM(workflow.revisedTotal)} · Delivery: {workflow.revisedDelivery}</p>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
