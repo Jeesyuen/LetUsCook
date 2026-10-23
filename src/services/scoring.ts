@@ -9,8 +9,9 @@
 //
 // The result is a decision-support score, not a probability.
 
-import { supplierProducts, suppliers } from '@/data/mockData'
-import { findSupplier } from '@/data/supplierRegistry'
+import { suppliers } from '@/data/mockData'
+import { allSupplierProducts, findSupplier } from '@/data/supplierRegistry'
+import { calculateLandedCost, getSupplierDistance } from '@/services/discovery'
 import type { Quotation, ScoringPriority, ScoringWeights, Supplier } from '@/types'
 import { addDays, startOfToday } from '@/utils/date'
 import { clamp, round } from '@/utils/format'
@@ -50,30 +51,54 @@ export const getSupplier = (id: string): Supplier => findSupplier(id) ?? supplie
 
 const QUOTE_EXPIRY: Record<string, number> = { 's-beancraft': 7, 's-aroma': 5, 's-nusantara': 10, 's-freshmart': 3, 's-klang': 14, 's-prime': 7 }
 
-/** Builds the (mock) quotations each supplier returned for a product and quantity. */
+/** Builds the quotations each supplier returned for a product and quantity, enriched with landed cost and proximity. */
 export function buildQuotations(productId: string, quantity: number, excludeSupplierIds: string[] = []): Quotation[] {
   const today = startOfToday()
-  return supplierProducts
-    .filter((sp) => sp.productId === productId && !excludeSupplierIds.includes(sp.supplierId))
-    .map((sp) => {
-      const supplier = getSupplier(sp.supplierId)
-      const subtotal = round(sp.unitPrice * quantity, 2)
-      return {
-        id: `q-${sp.supplierId}-${productId}-${quantity}`,
-        supplierId: sp.supplierId,
-        productId,
-        quantity,
-        unitPrice: sp.unitPrice,
-        subtotal,
-        deliveryFee: sp.deliveryFee,
-        total: round(subtotal + sp.deliveryFee, 2),
-        leadTimeDays: sp.leadTimeDays,
-        moq: sp.moq,
-        paymentTerms: supplier.paymentTerms,
-        issuedAt: addDays(today, -1).toISOString(),
-        expiresAt: addDays(today, QUOTE_EXPIRY[sp.supplierId] ?? 7).toISOString(),
-      }
-    })
+  const catalogue = allSupplierProducts()
+  const matching = catalogue.filter((sp) => sp.productId === productId && !excludeSupplierIds.includes(sp.supplierId))
+
+  const quotesWithCost = matching.map((sp) => {
+    const supplier = getSupplier(sp.supplierId)
+    const distanceKm = getSupplierDistance(supplier)
+    const landedCost = calculateLandedCost(sp.unitPrice, quantity, sp.deliveryFee)
+    const meetsMoq = quantity >= sp.moq
+    return { sp, supplier, distanceKm, landedCost, meetsMoq }
+  })
+
+  const fulfillable = quotesWithCost.filter((q) => q.meetsMoq)
+  const costPool = fulfillable.length > 0 ? fulfillable : quotesWithCost
+
+  const minCost = costPool.length > 0 ? Math.min(...costPool.map((q) => q.landedCost.totalLandedCost)) : 0
+  const minDays = matching.length > 0 ? Math.min(...matching.map((sp) => sp.leadTimeDays)) : 0
+  const minDistance = matching.length > 0 ? Math.min(...matching.map((sp) => getSupplierDistance(getSupplier(sp.supplierId)))) : 0
+
+  return quotesWithCost.map(({ sp, supplier, distanceKm, landedCost, meetsMoq }) => {
+    const tags: ('cheapest' | 'nearest' | 'fastest' | 'best-value')[] = []
+    const isEligibleForCheapest = fulfillable.length > 0 ? meetsMoq : true
+    if (isEligibleForCheapest && landedCost.totalLandedCost === minCost) tags.push('cheapest')
+    if (sp.leadTimeDays === minDays) tags.push('fastest')
+    if (distanceKm === minDistance) tags.push('nearest')
+
+    return {
+      id: `q-${sp.supplierId}-${productId}-${quantity}`,
+      supplierId: sp.supplierId,
+      productId,
+      quantity,
+      unitPrice: sp.unitPrice,
+      subtotal: landedCost.subtotal,
+      deliveryFee: sp.deliveryFee,
+      total: landedCost.totalLandedCost,
+      leadTimeDays: sp.leadTimeDays,
+      moq: sp.moq,
+      paymentTerms: supplier.paymentTerms,
+      issuedAt: addDays(today, -1).toISOString(),
+      expiresAt: addDays(today, QUOTE_EXPIRY[sp.supplierId] ?? 7).toISOString(),
+      landedCost,
+      distanceKm,
+      meetsMoq,
+      tags,
+    }
+  })
 }
 
 export interface CriterionScores {
