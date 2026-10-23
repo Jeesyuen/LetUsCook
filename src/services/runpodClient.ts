@@ -23,12 +23,12 @@ export interface RunPodChatResponse {
 }
 
 const ENDPOINT_ID = import.meta.env.VITE_RUNPOD_ENDPOINT_ID || 's3yoz365sju59f'
-const API_KEY = import.meta.env.VITE_RUNPOD_API_KEY || ''
 const DEFAULT_MODEL = (import.meta.env.VITE_RUNPOD_MODEL || 'qwen/qwen2.5-7b-instruct').toLowerCase()
-const USE_LIVE_RUNPOD = import.meta.env.VITE_USE_LIVE_RUNPOD !== 'false'
 
+// The API key lives in the dev server proxy (RUNPOD_API_KEY in vite.config.ts), never in the browser.
+// VITE_RUNPOD_ENABLED only switches the AI text on.
 export function isRunPodConfigured(): boolean {
-  return Boolean(ENDPOINT_ID && API_KEY && API_KEY !== 'YOUR_RUNPOD_API_KEY_HERE')
+  return import.meta.env.VITE_RUNPOD_ENABLED === 'true'
 }
 
 export async function callRunPodChat({
@@ -37,17 +37,16 @@ export async function callRunPodChat({
   maxTokens = 1000,
   model = DEFAULT_MODEL,
 }: RunPodChatOptions): Promise<RunPodChatResponse> {
-  // Silent return when live network is toggled off or credentials are unconfigured
-  if (!USE_LIVE_RUNPOD || !isRunPodConfigured()) {
+  // Silent return when the AI text is switched off
+  if (!isRunPodConfigured()) {
     return {
       success: false,
       content: '',
-      error: 'RunPod unconfigured or offline mode active',
+      error: 'RunPod is not enabled',
     }
   }
 
-  const baseUrl = typeof window !== 'undefined' ? '/api/runpod' : 'https://api.runpod.ai'
-  const url = `${baseUrl}/v2/${ENDPOINT_ID}/runsync`
+  const url = `/api/runpod/v2/${ENDPOINT_ID}/runsync`
 
   try {
     const controller = new AbortController()
@@ -55,10 +54,7 @@ export async function callRunPodChat({
 
     const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
         input: {
@@ -206,7 +202,7 @@ export async function getAIRestockAdvice(
   suggestedQty: number,
   leadTimeDays: number
 ): Promise<string | null> {
-  if (!USE_LIVE_RUNPOD || !isRunPodConfigured()) {
+  if (!isRunPodConfigured()) {
     return null
   }
 
@@ -253,7 +249,7 @@ export async function getAIProcurementAdvice(
   primarySupplier: { name: string; totalPrice?: number | null; deliveryDays?: number | null; reliability?: number | null },
   alternatives: Array<{ name: string; totalPrice?: number | null; deliveryDays?: number | null }>
 ): Promise<string | null> {
-  if (!USE_LIVE_RUNPOD || !isRunPodConfigured()) {
+  if (!isRunPodConfigured()) {
     return null
   }
 

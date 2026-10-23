@@ -27,10 +27,14 @@ SupplyWise AI interfaces with an OpenAI-compatible vLLM endpoint hosted on **Run
 
 Testers should specify their RunPod credentials in `.env.local`:
 ```env
+RUNPOD_API_KEY=your_runpod_api_key_here
+VITE_RUNPOD_ENABLED=true
 VITE_RUNPOD_ENDPOINT_ID=s3yoz365sju59f
 VITE_RUNPOD_MODEL=Qwen/Qwen2.5-7B-Instruct
-VITE_RUNPOD_API_KEY=your_runpod_api_key_here
 ```
+
+`RUNPOD_API_KEY` has no `VITE_` prefix on purpose: the Vite dev server proxy adds it to requests to
+`/api/runpod`, so the key never ends up in the browser bundle.
 *(On hosted environments like Replit, configure these credentials under **Tools → Secrets**).*
 
 State is synchronized in `localStorage`; use **Settings → Reset Demo** (or the user menu) to restore the starting scenario at any time.
