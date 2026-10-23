@@ -19,6 +19,7 @@ export function SupplierCard({ supplier, productCount, onRequestQuote }: { suppl
             </button>
             <div className="mt-0.5 flex items-center gap-1 text-[12.5px] text-muted">
               <MapPin className="h-3.5 w-3.5" /> {s.location}, {s.state}
+              {typeof s.distanceKm === 'number' && <span>· {s.distanceKm} km</span>}
             </div>
           </div>
           <Badge tone={s.status === 'Active' ? 'success' : 'neutral'} dot>

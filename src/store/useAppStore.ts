@@ -72,6 +72,8 @@ export interface PurchaseRequestInput {
   priority: ScoringPriority
   reason: string
   overrideReason?: string
+  /** Compatibility from the supplier matching engine ; falls back to the legacy quotation score */
+  score?: number
 }
 
 export interface NewProductInput {
@@ -265,7 +267,7 @@ export const useAppStore = create<AppState>()(
         const supplier = getSupplier(input.supplierId)
         const approval: ApprovalRequest = {
           id, kind: 'purchase', status: 'Pending', productId: input.productId, quantity: input.quantity, supplierId: input.supplierId,
-          unitPrice: quote.unitPrice, deliveryFee: quote.deliveryFee, total: quote.total, leadTimeDays: quote.leadTimeDays, score,
+          unitPrice: quote.unitPrice, deliveryFee: quote.deliveryFee, total: quote.total, leadTimeDays: quote.leadTimeDays, score: input.score ?? score,
           priority: input.priority, reason: input.reason, overrideReason: input.overrideReason, requestedBy: s.user.name, requestedAt: nowIso(),
         }
         const name = productName(s, input.productId)

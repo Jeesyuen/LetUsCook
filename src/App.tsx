@@ -12,6 +12,7 @@ const Quotations = lazy(() => import('@/pages/app/Quotations'))
 const Recommendations = lazy(() => import('@/pages/app/Recommendations'))
 const Approvals = lazy(() => import('@/pages/app/Approvals'))
 const PurchaseOrders = lazy(() => import('@/pages/app/PurchaseOrders'))
+const AutomationWorkflow = lazy(() => import('@/pages/app/AutomationWorkflow'))
 const Activity = lazy(() => import('@/pages/app/Activity'))
 const Settings = lazy(() => import('@/pages/app/Settings'))
 
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="recommendations" element={<Recommendations />} />
         <Route path="approvals" element={<Approvals />} />
         <Route path="purchase-orders" element={<PurchaseOrders />} />
+        <Route path="automation" element={<AutomationWorkflow />} />
         <Route path="activity" element={<Activity />} />
         <Route path="settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/app" replace />} />

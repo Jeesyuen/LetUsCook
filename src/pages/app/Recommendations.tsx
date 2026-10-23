@@ -5,6 +5,7 @@ import { CircleCheck, ClipboardCheck, GitCompareArrows, Sparkles, Truck, X } fro
 import { useAppStore } from '@/store/useAppStore'
 import { useRecommendations, type Recommendation } from '@/hooks/useDerived'
 import { CompatibilityScore, ProductThumb, RiskBadge, SupplierLogo } from '@/components/common'
+import { CategoryBadge } from '@/components/SupplierComparison'
 import { Card, EmptyState, PageHeader } from '@/components/ui/primitives'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/Overlay'
@@ -56,7 +57,19 @@ function AIRecommendationCard({ rec, onRequest, onDismiss }: { rec: Recommendati
         </div>
       </dl>
 
-      {best && <p className="mt-3 line-clamp-2 text-[13px] leading-relaxed text-muted">{rec.explanation.points[0]?.text} {rec.explanation.points[1]?.text}</p>}
+      {best && rec.categories.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {rec.categories.map((c) => (
+            <CategoryBadge key={c} category={c} />
+          ))}
+        </div>
+      )}
+      {best && <p className="mt-3 line-clamp-3 text-[13px] leading-relaxed text-muted">{rec.explanation.summary}</p>}
+      {best && rec.alternatives.length > 0 && (
+        <div className="mt-3 text-[12.5px] text-muted">
+          <span className="font-medium text-ink">Alternatives:</span> {rec.alternatives.map((a) => `${a.name} (${a.score}%)`).join(' · ')}
+        </div>
+      )}
 
       <div className="mt-auto pt-4">
         {rec.openPO ? (
@@ -121,7 +134,7 @@ export default function Recommendations() {
           <span className="font-semibold">{actionable.length} products</span> need a purchasing decision{actionable.length ? <> — about <span className="font-semibold">{formatRM(totalCost)}</span> at the best-ranked quotes.</> : '.'}
           <span className="text-muted"> {inProgress.length} more already in progress.</span>
         </p>
-        <span className="text-[12.5px] text-muted">Ranked with your Balanced weighting</span>
+        <span className="text-[12.5px] text-muted">AI Procurement Advisor · Best Overall + stock forecast</span>
       </div>
 
       {recs.length === 0 ? (
@@ -159,7 +172,7 @@ export default function Recommendations() {
         onConfirm={() => {
           const r = requesting
           if (!r?.best) return
-          request({ productId: r.product.id, quantity: r.forecast.suggestedQty, supplierId: r.best.supplier.id, priority: 'balanced', reason: r.explanation.summary })
+          request({ productId: r.product.id, quantity: r.forecast.suggestedQty, supplierId: r.best.supplier.id, priority: 'balanced', score: r.best.score, reason: r.explanation.summary })
           toast.success('Approval requested', { description: `${r.product.name} — ${r.best.supplier.name}`, action: { label: 'View', onClick: () => navigate('/app/approvals') } })
         }}
       >
