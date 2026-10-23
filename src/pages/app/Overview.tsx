@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Boxes, ClipboardCheck, ShoppingCart, Sparkles, TriangleAlert, Wallet } from 'lucide-react'
 import { useAppStore, OPEN_PO_STATUSES } from '@/store/useAppStore'
-import { useForecasts, useOpenPOFor, useRecommendations, useRiskRanking } from '@/hooks/useDerived'
+import { useForecasts, useOpenPOsFor, useRecommendations, useRiskRanking } from '@/hooks/useDerived'
 import { buildForecastSeries } from '@/services/forecasting'
 import { ForecastChart, ChartLegend } from '@/components/charts/ForecastChart'
 import { InventoryAlertCard } from '@/components/InventoryAlertCard'
@@ -34,8 +34,8 @@ export default function Overview() {
   const top3 = ranking.slice(0, 3)
   const [chartId, setChartId] = useState<string>(top3[0]?.product.id ?? '')
   const selected = all.find((x) => x.product.id === chartId) ?? top3[0]
-  const openPO = useOpenPOFor(selected?.product.id)
-  const series = useMemo(() => (selected ? buildForecastSeries(selected.product, selected.forecast, openPO) : null), [selected, openPO])
+  const openPOs = useOpenPOsFor(selected?.product.id)
+  const series = useMemo(() => (selected ? buildForecastSeries(selected.product, selected.forecast, openPOs) : null), [selected, openPOs])
 
   const insight = recs[0]
 

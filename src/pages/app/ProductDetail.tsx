@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ClipboardList, PackageX, RefreshCw, Search, ShoppingCart, Truck } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import { useOpenPOFor, useProductForecast, useSuppliers } from '@/hooks/useDerived'
+import { useOpenPOsFor, useProductForecast, useSuppliers } from '@/hooks/useDerived'
 import { buildForecastSeries, explainForecast } from '@/services/forecasting'
 import { supplierProducts } from '@/data/mockData'
 import { ChartLegend, ForecastChart } from '@/components/charts/ForecastChart'
@@ -21,14 +21,15 @@ export default function ProductDetail() {
   const pf = useProductForecast(productId)
   const movements = useAppStore((s) => s.movements)
   const suppliers = useSuppliers()
-  const openPO = useOpenPOFor(productId)
+  const openPOs = useOpenPOsFor(productId)
+  const openPO = openPOs[0]
   const [adjustOpen, setAdjustOpen] = useState(false)
   const [reorderOpen, setReorderOpen] = useState(false)
   const [view, setView] = useState(0)
   const [moveFilter, setMoveFilter] = useState<'all' | 'receipt' | 'adjustment' | 'usage'>('all')
 
   const history = useMemo(() => movements.filter((m) => m.productId === productId), [movements, productId])
-  const series = useMemo(() => (pf ? buildForecastSeries(pf.product, pf.forecast, openPO) : null), [pf, openPO])
+  const series = useMemo(() => (pf ? buildForecastSeries(pf.product, pf.forecast, openPOs) : null), [pf, openPOs])
   useEffect(() => {
     if (hash === '#history') setTimeout(() => document.getElementById('history')?.scrollIntoView({ behavior: 'smooth' }), 250)
   }, [hash])

@@ -66,6 +66,7 @@ export const suppliers: Supplier[] = [
     paymentTerms: 'Net 30',
     since: 2021,
     about: 'Specialty coffee importer and roaster supplying cafés across the Klang Valley with single-origin and blended beans.',
+    distanceKm: 22,
   },
   {
     id: 's-aroma',
@@ -91,6 +92,7 @@ export const suppliers: Supplier[] = [
     paymentTerms: 'Net 30',
     since: 2022,
     about: 'Café essentials distributor covering coffee beans, flavoured syrups and barista accessories.',
+    distanceKm: 12,
   },
   {
     id: 's-nusantara',
@@ -116,6 +118,7 @@ export const suppliers: Supplier[] = [
     paymentTerms: 'Net 14',
     since: 2023,
     about: 'Bulk trader of Southeast Asian coffee and tea with competitive pricing on larger orders.',
+    distanceKm: 205,
   },
   {
     id: 's-freshmart',
@@ -141,6 +144,7 @@ export const suppliers: Supplier[] = [
     paymentTerms: 'Net 14',
     since: 2021,
     about: 'Cold-chain distributor of fresh dairy, plant-based milk and chilled goods with next-day delivery.',
+    distanceKm: 18,
   },
   {
     id: 's-klang',
@@ -166,6 +170,7 @@ export const suppliers: Supplier[] = [
     paymentTerms: 'Net 30',
     since: 2022,
     about: 'Food-grade cups, lids and takeaway packaging, including compostable options.',
+    distanceKm: 36,
   },
   {
     id: 's-prime',
@@ -191,6 +196,7 @@ export const suppliers: Supplier[] = [
     paymentTerms: 'Net 30',
     since: 2024,
     about: 'Broad-line F&B ingredient wholesaler. Flagged for review after two late deliveries last quarter.',
+    distanceKm: 330,
   },
 ]
 
@@ -325,7 +331,7 @@ export function seedProductsAndMovements(): { products: Product[]; movements: In
     const usage = seed.usageOverride ?? buildUsage(seed.avg, idx + 1, !!seed.integerUsage)
     const { levels, receipts } = buildHistory(seed, usage)
     const { avg: _avg, usageOverride: _u, integerUsage: _i, ...rest } = seed
-    products.push({ ...rest, usageHistory: usage, stockHistory: levels, supplierIds: supplierIdsFor(seed.id) })
+    products.push({ ...rest, usageHistory: usage, usageHistorySource: 'simulated', stockHistory: levels, supplierIds: supplierIdsFor(seed.id) })
 
     // Movement log: receipts plus the last 5 days of POS usage
     receipts.forEach((r, n) => {
