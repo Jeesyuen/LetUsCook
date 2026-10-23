@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { seedProductsAndMovements } from '@/data/mockData'
 import { setCustomSupplierProducts } from '@/data/supplierRegistry'
 import { discoverSuppliers } from './discovery'
@@ -42,6 +42,9 @@ describe('Track 03A: discovery & scoring bug fixes', () => {
   })
 
   describe('Bug 2: buildQuotations cheapest tag & MOQ eligibility', () => {
+    // Reset even when an assertion fails, so test products never leak into other tests
+    afterEach(() => setCustomSupplierProducts([]))
+
     it('does not tag a supplier as cheapest if the supplier MOQ is higher than requested quantity', () => {
       // Setup isolated test supplier products for a test product
       const testProductId = 'prod-test-moq'
@@ -78,9 +81,6 @@ describe('Track 03A: discovery & scoring bug fixes', () => {
       // Prime cannot actually accept the order, so freshmart (fulfillable lowest landed cost) must be tagged cheapest
       expect(primeQuote?.tags).not.toContain('cheapest')
       expect(freshQuote?.tags).toContain('cheapest')
-
-      // Clean up custom supplier products
-      setCustomSupplierProducts([])
     })
 
     it('reliably awards cheapest tag even with floating-point decimal prices', () => {
@@ -112,8 +112,6 @@ describe('Track 03A: discovery & scoring bug fixes', () => {
 
       expect(primeQuote?.tags).toContain('cheapest')
       expect(freshQuote?.tags).not.toContain('cheapest')
-
-      setCustomSupplierProducts([])
     })
   })
 })
