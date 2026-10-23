@@ -24,7 +24,7 @@ export interface RunPodChatResponse {
 
 const ENDPOINT_ID = import.meta.env.VITE_RUNPOD_ENDPOINT_ID || 's3yoz365sju59f'
 const API_KEY = import.meta.env.VITE_RUNPOD_API_KEY || ''
-const DEFAULT_MODEL = import.meta.env.VITE_RUNPOD_MODEL || 'Qwen/Qwen2.5-7B-Instruct'
+const DEFAULT_MODEL = (import.meta.env.VITE_RUNPOD_MODEL || 'qwen/qwen2.5-7b-instruct').toLowerCase()
 
 export function isRunPodConfigured(): boolean {
   return Boolean(ENDPOINT_ID && API_KEY && API_KEY !== 'YOUR_RUNPOD_API_KEY_HERE')
@@ -55,7 +55,7 @@ export async function callRunPodChat({
       },
       body: JSON.stringify({
         input: {
-          model,
+          model: model.toLowerCase(),
           messages,
           temperature,
           max_tokens: maxTokens,
