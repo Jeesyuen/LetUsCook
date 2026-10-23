@@ -1,6 +1,7 @@
 import os
 import sys
 from typing import Optional
+from uuid import UUID
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -36,12 +37,12 @@ app.add_middleware(
 # --- Input Models ---
 
 class StockUpdate(BaseModel):
-    product_id: str
+    product_id: UUID
     quantity_change: int
 
 class POCreate(BaseModel):
-    supplier_id: str
-    product_id: str
+    supplier_id: UUID
+    product_id: UUID
     quantity: int = Field(..., gt=0, description="Quantity must be greater than 0")
     unit_price: float = Field(..., gt=0, description="Unit price must be greater than 0")
     created_by: Optional[str] = "Staff"
@@ -64,7 +65,7 @@ def get_suppliers():
     return {"data": supabase.table("suppliers").select("*").execute().data}
 
 @app.get("/quotations")
-def get_quotations(product_id: Optional[str] = None):
+def get_quotations(product_id: Optional[UUID] = None):
     query = supabase.table("quotations").select("*, suppliers(name, reliability_score, quality_rating), products(name, sku)")
     if product_id:
         query = query.eq("product_id", product_id)
@@ -94,8 +95,8 @@ def create_purchase_order(po: POCreate):
     total_amount = round(po.quantity * po.unit_price, 2)
 
     res = supabase.table("purchase_orders").insert({
-        "supplier_id": po.supplier_id,
-        "product_id": po.product_id,
+        "supplier_id": str(po.supplier_id),
+        "product_id": str(po.product_id),
         "quantity": po.quantity,
         "unit_price": po.unit_price,
         "total_amount": total_amount,
@@ -112,7 +113,7 @@ def create_purchase_order(po: POCreate):
     return {"data": res.data}
 
 @app.post("/purchase-orders/{po_id}/approve")
-def approve_purchase_order(po_id: str, body: POApprove):
+def approve_purchase_order(po_id: UUID, body: POApprove):
     po = supabase.table("purchase_orders").select("*").eq("id", po_id).execute()
     if not po.data:
         raise HTTPException(status_code=404, detail=f"Purchase order '{po_id}' not found")
