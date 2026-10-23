@@ -57,26 +57,26 @@ def root():
 
 @app.get("/inventory")
 def get_inventory():
-    return supabase.table("products").select("*").execute().data
+    return {"data": supabase.table("products").select("*").execute().data}
 
 @app.get("/suppliers")
 def get_suppliers():
-    return supabase.table("suppliers").select("*").execute().data
+    return {"data": supabase.table("suppliers").select("*").execute().data}
 
 @app.get("/quotations")
 def get_quotations(product_id: Optional[str] = None):
     query = supabase.table("quotations").select("*, suppliers(name, reliability_score, quality_rating), products(name, sku)")
     if product_id:
         query = query.eq("product_id", product_id)
-    return query.execute().data
+    return {"data": query.execute().data}
 
 @app.get("/purchase-orders")
 def get_purchase_orders():
-    return supabase.table("purchase_orders").select("*, products(name, sku), suppliers(name)").order("created_at", desc=True).execute().data
+    return {"data": supabase.table("purchase_orders").select("*, products(name, sku), suppliers(name)").order("created_at", desc=True).execute().data}
 
 @app.get("/activity-logs")
 def get_activity_logs():
-    return supabase.table("activity_logs").select("*").order("created_at", desc=True).execute().data
+    return {"data": supabase.table("activity_logs").select("*").order("created_at", desc=True).execute().data}
 
 @app.post("/purchase-orders", status_code=status.HTTP_201_CREATED)
 def create_purchase_order(po: POCreate):
@@ -109,7 +109,7 @@ def create_purchase_order(po: POCreate):
         "details": f"Created PO for product {po.product_id} with status 'Draft'"
     }).execute()
 
-    return res.data
+    return {"data": res.data}
 
 @app.post("/purchase-orders/{po_id}/approve")
 def approve_purchase_order(po_id: str, body: POApprove):
@@ -127,7 +127,7 @@ def approve_purchase_order(po_id: str, body: POApprove):
         "details": f"PO {po_id} approved by {body.approver_name}"
     }).execute()
 
-    return res.data
+    return {"data": res.data}
 
 @app.post("/inventory/update")
 def update_stock(data: StockUpdate):
@@ -148,7 +148,7 @@ def update_stock(data: StockUpdate):
         "details": f"Stock for product {data.product_id} updated from {current_stock} to {new_stock}"
     }).execute()
 
-    return res.data
+    return {"data": res.data}
 
 if __name__ == "__main__":
     import uvicorn
