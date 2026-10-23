@@ -131,6 +131,9 @@ def approve_purchase_order(po_id: str, body: POApprove):
 
 @app.post("/inventory/update")
 def update_stock(data: StockUpdate):
+    if data.quantity_change == 0:
+        raise HTTPException(status_code=422, detail="quantity_change must not be zero")
+
     prod = supabase.table("products").select("*").eq("id", data.product_id).execute()
     if not prod.data:
         raise HTTPException(status_code=404, detail=f"Product '{data.product_id}' not found")
