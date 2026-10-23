@@ -166,7 +166,7 @@ export function computeForecast(
         ? 'Fewer than 7 valid daily observations; variability and recent trends are unavailable.'
         : null
   const riskReason = status === 'Out of Stock'
-    ? `Current stock is zero or invalid ${p.unit}; replenish immediately.`
+    ? 'No usable stock is on hand; replenish immediately.'
     : status === 'Critical'
       ? stock <= safetyStock
         ? `Current stock of ${round(stock, 1)} ${p.unit} is at or below the safety stock of ${round(safetyStock, 1)} ${p.unit}.`
