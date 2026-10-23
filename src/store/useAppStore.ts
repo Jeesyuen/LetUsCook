@@ -16,11 +16,10 @@ import {
   seedProductsAndMovements,
   seedPurchaseOrders,
   seedQuotationHistory,
-  supplierProducts,
   SYSTEM_USER,
   type QuotationHistoryEntry,
 } from '@/data/mockData'
-import { setCustomSuppliers } from '@/data/supplierRegistry'
+import { preferredSupplierMoq, setCustomSuppliers } from '@/data/supplierRegistry'
 import { composePOMessage, simulatedChangeRequest, supplierReplies, type Channel } from '@/services/communication'
 import { computeForecast } from '@/services/forecasting'
 import { buildQuotations, getSupplier, priorityLabels, scoreQuotations, weightsFor } from '@/services/scoring'
@@ -156,7 +155,7 @@ function notification(title: string, body: string, tone: ActivityTone, link?: st
 /** Raises a risk activity + notification when a product newly becomes Critical / Out of Stock. */
 function riskEvents(s: DemoData, before: Product, after: Product): { acts: ActivityLog[]; notes: AppNotification[] } {
   const incoming = s.purchaseOrders.filter((po) => po.productId === after.id && OPEN_PO_STATUSES.includes(po.status))
-  const minimumOrderQty = supplierProducts.find((sp) => sp.productId === after.id && sp.supplierId === after.reorder.preferredSupplierId)?.moq ?? 0
+  const minimumOrderQty = preferredSupplierMoq(after)
   const fb = computeForecast(before, s.settings.coverageDays, incoming, undefined, minimumOrderQty)
   const fa = computeForecast(after, s.settings.coverageDays, incoming, undefined, minimumOrderQty)
   if (fa.risk === 'High' && fb.risk !== 'High') {
@@ -488,8 +487,7 @@ export const useAppStore = create<AppState>()(
           const newStock = round(product.currentStock + receivedQty, 2)
           const updatedProduct = { ...product, currentStock: newStock }
           const remainingOrders = s.purchaseOrders.filter((p) => p.id !== poId && p.productId === product.id && OPEN_PO_STATUSES.includes(p.status))
-          const minimumOrderQty = supplierProducts.find((sp) => sp.productId === product.id && sp.supplierId === product.reorder.preferredSupplierId)?.moq ?? 0
-          const f = computeForecast(updatedProduct, s.settings.coverageDays, remainingOrders, undefined, minimumOrderQty)
+          const f = computeForecast(updatedProduct, s.settings.coverageDays, remainingOrders, undefined, preferredSupplierMoq(product))
           const short = receivedQty < po.quantity
           return {
             products: s.products.map((p) => (p.id === product.id ? updatedProduct : p)),
