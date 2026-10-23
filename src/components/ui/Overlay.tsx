@@ -6,16 +6,22 @@ import { Button } from './Button'
 import { Label, Textarea } from './primitives'
 import { cn } from '@/utils/format'
 
+let activeOverlaysCount = 0
+
 function useEscape(open: boolean, onClose: () => void) {
   useEffect(() => {
     if (!open) return
     const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', h)
-    const prev = document.body.style.overflow
+    activeOverlaysCount++
     document.body.style.overflow = 'hidden'
+
     return () => {
       window.removeEventListener('keydown', h)
-      document.body.style.overflow = prev
+      activeOverlaysCount = Math.max(0, activeOverlaysCount - 1)
+      if (activeOverlaysCount === 0) {
+        document.body.style.overflow = ''
+      }
     }
   }, [open, onClose])
 }

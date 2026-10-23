@@ -14,8 +14,26 @@ npm run build      # type-check + production build
 npm test           # forecasting and supplier matching tests (Vitest)
 ```
 
-No backend, API keys or external services are needed. Demo state is saved in `localStorage`;
-use **Settings → Reset Demo** (or the user menu) to restore the starting scenario.
+## Configuration & Environment Variables
+
+To configure environment variables for local testing, copy the template:
+
+```bash
+cp .env.example .env.local
+```
+
+### AI Inference Configuration (RunPod Serverless)
+SupplyWise AI interfaces with an OpenAI-compatible vLLM endpoint hosted on **RunPod Serverless (NVIDIA RTX 4090)** running `Qwen/Qwen2.5-7B-Instruct`.
+
+Testers should specify their RunPod credentials in `.env.local`:
+```env
+VITE_RUNPOD_ENDPOINT_ID=s3yoz365sju59f
+VITE_RUNPOD_MODEL=Qwen/Qwen2.5-7B-Instruct
+VITE_RUNPOD_API_KEY=your_runpod_api_key_here
+```
+*(On hosted environments like Replit, configure these credentials under **Tools → Secrets**).*
+
+State is synchronized in `localStorage`; use **Settings → Reset Demo** (or the user menu) to restore the starting scenario at any time.
 
 ## Demo walkthrough
 
