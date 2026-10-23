@@ -136,7 +136,7 @@ export default function Recommendations() {
             <span className="text-muted"> {inProgress.length} more already in progress.</span>
           </p>
           <p className="mt-0.5 text-[12.5px] text-muted">
-            Ranked by AI Procurement Advisor using balanced supplier scores and inventory stockout forecasts.
+            Ranked by balanced supplier scores and inventory stockout forecasts.
           </p>
         </div>
       </div>

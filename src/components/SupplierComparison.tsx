@@ -246,7 +246,10 @@ export function ProcurementAdvisorPanel({
         ))}
       </div>
       <p className="mt-4 flex items-center gap-1.5 text-[11.5px] text-[#9aa1b5]">
-        Generated from calculated scores, supplier data and inventory stock forecast. <ScoreExplainer />
+        {customAdvice
+          ? 'Recommendation written by AI (Qwen 2.5 7B) from the calculated scores, supplier data and stock forecast. Rankings use deterministic rules.'
+          : 'Generated from the calculated scores, supplier data and stock forecast with deterministic rules — no external AI service is called.'}{' '}
+        <ScoreExplainer />
       </p>
     </div>
   )

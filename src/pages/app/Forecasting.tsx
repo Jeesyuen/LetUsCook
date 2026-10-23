@@ -200,6 +200,7 @@ export default function Forecasting() {
               <h3 className="text-[15px] font-semibold text-ink">{forecast.needsReorder ? 'Restock Recommended' : openPO ? 'Replenishment on the way' : 'No restock needed yet'}</h3>
             </div>
             <p className="mt-3 text-[14px] leading-relaxed text-muted">{aiRestockAdvice || explainForecast(product, forecast)}</p>
+            {aiRestockAdvice && <p className="mt-1.5 text-[11.5px] text-[#9aa1b5]">AI suggestion from Qwen 2.5 7B, based on the forecast above.</p>}
 
             {forecast.needsReorder && (
               <div className="mt-4 rounded-2xl bg-subtle/80 p-4">
