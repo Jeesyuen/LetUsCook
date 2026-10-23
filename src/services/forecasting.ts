@@ -227,10 +227,10 @@ export interface ForecastPoint {
 /**
  * Builds a chart series: 14 days of history, today, and `horizon` days of projection.
  * `projected` = depletion if nothing is ordered. `withRestock` = depletion plus the expected
- * replenishment — an open PO's delivery if one exists, otherwise the recommended order placed on the
- * reorder date and arriving after the lead time.
+ * replenishment — every open PO's delivery if any exist, otherwise the recommended order placed on the
+ * reorder date and arriving after the lead time. The replenishment marker shows the first open PO.
  */
-export function buildForecastSeries(p: Product, f: Forecast, openPO?: PurchaseOrder, horizon = 21) {
+export function buildForecastSeries(p: Product, f: Forecast, openPOs: PurchaseOrder[] = [], horizon = 21) {
   const today = startOfToday()
   const points: ForecastPoint[] = []
   p.stockHistory.forEach((level, i) => {
@@ -238,21 +238,19 @@ export function buildForecastSeries(p: Product, f: Forecast, openPO?: PurchaseOr
     points.push({ day, label: formatShortDate(addDays(today, day)), historical: level, safety: f.safetyStock })
   })
 
-  let replenishDay: number
-  let replenishQty: number
-  if (openPO) {
-    replenishDay = Math.max(0, diffDays(new Date(openPO.expectedDelivery), today))
-    replenishQty = openPO.quantity
-  } else {
-    replenishDay = Math.ceil(f.daysUntilReorder) + f.leadTimeDays
-    replenishQty = f.suggestedQty
-  }
+  const arrivalDay = (po: PurchaseOrder) => Math.max(0, diffDays(new Date(po.expectedDelivery), today))
+  const openPO = openPOs[0]
+  const replenishDay = openPO ? arrivalDay(openPO) : Math.ceil(f.daysUntilReorder) + f.leadTimeDays
+  const replenishQty = openPO ? openPO.quantity : f.suggestedQty
+  const arrivals = new Map<number, number>()
+  if (openPO) openPOs.forEach((po) => arrivals.set(arrivalDay(po), (arrivals.get(arrivalDay(po)) ?? 0) + po.quantity))
+  else arrivals.set(replenishDay, replenishQty)
 
   let withRestock = p.currentStock
   for (let d = 0; d <= horizon; d++) {
     const projected = Math.max(0, p.currentStock - f.forecastDailyUsage * d)
     if (d > 0) withRestock = Math.max(0, withRestock - f.forecastDailyUsage)
-    if (d === replenishDay) withRestock += replenishQty
+    withRestock += arrivals.get(d) ?? 0
     points.push({
       day: d,
       label: d === 0 ? 'Today' : formatShortDate(addDays(today, d)),

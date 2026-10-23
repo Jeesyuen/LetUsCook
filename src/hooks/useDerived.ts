@@ -38,9 +38,9 @@ export function useRiskRanking(): ProductWithForecast[] {
   return useMemo(() => [...all].sort((a, b) => a.forecast.coverageMargin - b.forecast.coverageMargin), [all])
 }
 
-export function useOpenPOFor(productId: string | undefined): PurchaseOrder | undefined {
+export function useOpenPOsFor(productId: string | undefined): PurchaseOrder[] {
   const pos = useAppStore((s) => s.purchaseOrders)
-  return useMemo(() => pos.find((p) => p.productId === productId && OPEN_PO_STATUSES.includes(p.status)), [pos, productId])
+  return useMemo(() => pos.filter((p) => p.productId === productId && OPEN_PO_STATUSES.includes(p.status)), [pos, productId])
 }
 
 export interface Recommendation extends ProductWithForecast {

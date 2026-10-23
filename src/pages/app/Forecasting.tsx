@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarClock, ClipboardCheck, PackageX, Search, Sparkles, TriangleAlert, Truck, Wallet } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import { useForecasts, useOpenPOFor, useRiskRanking } from '@/hooks/useDerived'
+import { useForecasts, useOpenPOsFor, useRiskRanking } from '@/hooks/useDerived'
 import { buildForecastSeries, EXPOSURE_BUFFER_DAYS, explainForecast, grossProfitAtRisk } from '@/services/forecasting'
 import { ChartLegend, ForecastChart } from '@/components/charts/ForecastChart'
 import { UsageForecastChart } from '@/components/charts/UsageForecastChart'
@@ -30,8 +30,9 @@ export default function Forecasting() {
 
   const productId = params.get('product') ?? ranking[0]?.product.id
   const selected = all.find((x) => x.product.id === productId) ?? ranking[0]
-  const openPO = useOpenPOFor(selected?.product.id)
-  const series = useMemo(() => (selected ? buildForecastSeries(selected.product, selected.forecast, openPO) : null), [selected, openPO])
+  const openPOs = useOpenPOsFor(selected?.product.id)
+  const openPO = openPOs[0]
+  const series = useMemo(() => (selected ? buildForecastSeries(selected.product, selected.forecast, openPOs) : null), [selected, openPOs])
 
   const atRisk = all.filter((x) => x.forecast.status !== 'Healthy').length
   const critical = all.filter((x) => x.forecast.risk === 'High')

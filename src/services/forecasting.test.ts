@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { computeForecast } from '@/services/forecasting'
+import { buildForecastSeries, computeForecast } from '@/services/forecasting'
+import { addDays, startOfToday } from '@/utils/date'
 import type { Product, PurchaseOrder } from '@/types'
 
 const AS_OF = new Date(2026, 9, 23)
@@ -222,5 +223,22 @@ describe('computeForecast', () => {
     expect(forecast.daysRemaining).toBe(14)
     expect(forecast.incoming).toBe(0)
     expect(Number.isFinite(forecast.stockoutDate?.getTime())).toBe(true)
+  })
+})
+
+describe('buildForecastSeries', () => {
+  it('adds every open order to the restock line, not just the first', () => {
+    const product = makeProduct({ currentStock: 20 })
+    const forecast = computeForecast(product, 7)
+    const today = startOfToday()
+    const orders = [makeOrder(addDays(today, 2).toISOString(), 10), makeOrder(addDays(today, 5).toISOString(), 15)]
+    const { points, replenishDay, replenishQty, replenishFromPO } = buildForecastSeries(product, forecast, orders)
+    const day = (d: number) => points.find((point) => point.day === d)
+
+    expect(replenishFromPO).toBe(true)
+    expect(replenishDay).toBe(2)
+    expect(replenishQty).toBe(10)
+    expect(day(2)?.withRestock).toBe(26)
+    expect(day(5)?.withRestock).toBe(35)
   })
 })
