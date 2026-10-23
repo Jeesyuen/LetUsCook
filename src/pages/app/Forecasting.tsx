@@ -41,6 +41,25 @@ export default function Forecasting() {
   const upcoming = all.filter((x) => x.forecast.daysUntilReorder <= 7 && x.forecast.suggestedQty > 0).length
   const gpRisk = all.reduce((sum, x) => sum + grossProfitAtRisk(x.product, x.forecast), 0)
 
+  // Hooks must run before the empty-state return below
+  const [aiRestockAdvice, setAiRestockAdvice] = useState<string | null>(null)
+  const p = selected?.product
+  const f = selected?.forecast
+
+  useEffect(() => {
+    let active = true
+    if (p && f?.needsReorder) {
+      getAIRestockAdvice(p.name, p.unit, p.currentStock, f.avgDailyUsage, f.daysRemaining, f.suggestedQty, f.leadTimeDays).then((text) => {
+        if (active && text) setAiRestockAdvice(text)
+      })
+    } else {
+      setAiRestockAdvice(null)
+    }
+    return () => {
+      active = false
+    }
+  }, [p?.name, p?.unit, p?.currentStock, f?.avgDailyUsage, f?.daysRemaining, f?.suggestedQty, f?.leadTimeDays, f?.needsReorder])
+
   if (!selected || !series)
     return (
       <div>
@@ -60,30 +79,6 @@ export default function Forecasting() {
   const select = (id: string) => setParams({ product: id }, { replace: true })
   const qty = forecast.suggestedQty || forecast.calculatedQty || product.orderMultiple
   const findBest = () => navigate(`/app/quotations?product=${product.id}&qty=${qty}`)
-
-  const [aiRestockAdvice, setAiRestockAdvice] = useState<string | null>(null)
-
-  useEffect(() => {
-    let active = true
-    if (forecast.needsReorder) {
-      getAIRestockAdvice(
-        product.name,
-        product.unit,
-        product.currentStock,
-        forecast.avgDailyUsage,
-        forecast.daysRemaining,
-        forecast.suggestedQty,
-        forecast.leadTimeDays
-      ).then((text) => {
-        if (active && text) setAiRestockAdvice(text)
-      })
-    } else {
-      setAiRestockAdvice(null)
-    }
-    return () => {
-      active = false
-    }
-  }, [product.name, product.unit, product.currentStock, forecast.avgDailyUsage, forecast.daysRemaining, forecast.suggestedQty, forecast.leadTimeDays, forecast.needsReorder])
 
   const details = [
     { label: 'Current stock', value: formatQty(product.currentStock, product.unit) },
