@@ -17,6 +17,20 @@ npm test           # forecasting and supplier matching tests (Vitest)
 No backend, API keys or external services are needed. Demo state is saved in `localStorage`;
 use **Settings → Reset Demo** (or the user menu) to restore the starting scenario.
 
+## Backend API (optional)
+
+`main.py` is a FastAPI service over Supabase. The frontend does not call it yet.
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # then fill in SUPABASE_URL and SUPABASE_KEY
+python main.py                # http://localhost:8000, interactive docs at /docs
+```
+
+The Supabase tables (`products`, `suppliers`, `quotations`, `purchase_orders`, `activity_logs`) must already exist.
+
 ## Demo walkthrough
 
 1. Landing page → **Launch Dashboard**
