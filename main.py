@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -32,8 +32,8 @@ class StockUpdateSchema(BaseModel):
 class POCreateSchema(BaseModel):
     product_id: str
     supplier_id: str
-    quantity: float
-    total_amount: float
+    quantity: float = Field(..., gt=0)
+    total_amount: float = Field(..., ge=0)
     approved_by: Optional[str] = "Manager (Lim Yi-En)"
 
 @app.get("/")
@@ -63,8 +63,14 @@ def get_purchase_orders():
     res = supabase.table("purchase_orders").select("*, products(name, sku), suppliers(name)").order("created_at", desc=True).execute()
     return {"data": res.data}
 
+def ensure_exists(table: str, row_id: str, label: str):
+    if not supabase.table(table).select("id").eq("id", row_id).execute().data:
+        raise HTTPException(status_code=404, detail=f"{label} not found")
+
 @app.post("/inventory/update")
 def update_inventory(payload: StockUpdateSchema):
+    if payload.quantity_change == 0:
+        raise HTTPException(status_code=422, detail="quantity_change must not be zero")
     product = supabase.table("products").select("current_stock, name").eq("id", payload.product_id).execute()
     if not product.data:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -84,6 +90,8 @@ def update_inventory(payload: StockUpdateSchema):
 
 @app.post("/purchase-orders")
 def create_purchase_order(payload: POCreateSchema):
+    ensure_exists("products", payload.product_id, "Product")
+    ensure_exists("suppliers", payload.supplier_id, "Supplier")
     po_data = {
         "product_id": payload.product_id,
         "supplier_id": payload.supplier_id,
