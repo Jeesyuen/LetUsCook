@@ -126,15 +126,19 @@ export default function Recommendations() {
         }
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-line bg-white px-5 py-4">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3ecff] text-violet">
-          <Sparkles className="h-[18px] w-[18px]" />
+      <div className="mb-6 flex items-center gap-4 rounded-2xl border border-line bg-white px-5 py-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f3ecff] text-violet">
+          <Sparkles className="h-5 w-5" />
         </span>
-        <p className="min-w-[220px] flex-1 text-[14px] text-ink">
-          <span className="font-semibold">{actionable.length} products</span> need a purchasing decision{actionable.length ? <> — about <span className="font-semibold">{formatRM(totalCost)}</span> at the best-ranked quotes.</> : '.'}
-          <span className="text-muted"> {inProgress.length} more already in progress.</span>
-        </p>
-        <span className="text-[12.5px] text-muted">AI Procurement Advisor · Best Overall + stock forecast</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] text-ink">
+            <span className="font-semibold">{actionable.length} products</span> need a purchasing decision{actionable.length ? <> — about <span className="font-semibold">{formatRM(totalCost)}</span> at the best-ranked quotes.</> : '.'}
+            <span className="text-muted"> {inProgress.length} more already in progress.</span>
+          </p>
+          <p className="mt-0.5 text-[12.5px] text-muted">
+            Ranked by balanced supplier scores and inventory stockout forecasts.
+          </p>
+        </div>
       </div>
 
       {recs.length === 0 ? (

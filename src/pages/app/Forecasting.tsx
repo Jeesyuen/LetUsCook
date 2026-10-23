@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, CalendarClock, ClipboardCheck, PackageX, Search, Sparkles, TriangleAlert, Truck, Wallet } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { useForecasts, useOpenPOsFor, useRiskRanking } from '@/hooks/useDerived'
 import { buildForecastSeries, EXPOSURE_BUFFER_DAYS, explainForecast, grossProfitAtRisk } from '@/services/forecasting'
+import { getAIRestockAdvice } from '@/services/runpodClient'
 import { ChartLegend, ForecastChart } from '@/components/charts/ForecastChart'
 import { UsageForecastChart } from '@/components/charts/UsageForecastChart'
 import { ProductThumb, RiskBadge, StatCard, StockStatusBadge } from '@/components/common'
@@ -39,6 +40,25 @@ export default function Forecasting() {
   const stockouts = all.filter((x) => x.forecast.status === 'Out of Stock' || x.forecast.daysRemaining <= 14).length
   const upcoming = all.filter((x) => x.forecast.daysUntilReorder <= 7 && x.forecast.suggestedQty > 0).length
   const gpRisk = all.reduce((sum, x) => sum + grossProfitAtRisk(x.product, x.forecast), 0)
+
+  // Hooks must run before the empty-state return below
+  const [aiRestockAdvice, setAiRestockAdvice] = useState<string | null>(null)
+  const p = selected?.product
+  const f = selected?.forecast
+
+  useEffect(() => {
+    let active = true
+    // Drop the previous product's advice so it never shows under this one
+    setAiRestockAdvice(null)
+    if (p && f?.needsReorder) {
+      getAIRestockAdvice(p.name, p.unit, p.currentStock, f.avgDailyUsage, f.daysRemaining, f.suggestedQty, f.leadTimeDays).then((text) => {
+        if (active && text) setAiRestockAdvice(text)
+      })
+    }
+    return () => {
+      active = false
+    }
+  }, [p?.name, p?.unit, p?.currentStock, f?.avgDailyUsage, f?.daysRemaining, f?.suggestedQty, f?.leadTimeDays, f?.needsReorder])
 
   if (!selected || !series)
     return (
@@ -179,7 +199,8 @@ export default function Forecasting() {
               </span>
               <h3 className="text-[15px] font-semibold text-ink">{forecast.needsReorder ? 'Restock Recommended' : openPO ? 'Replenishment on the way' : 'No restock needed yet'}</h3>
             </div>
-            <p className="mt-3 text-[14px] leading-relaxed text-muted">{explainForecast(product, forecast)}</p>
+            <p className="mt-3 text-[14px] leading-relaxed text-muted">{aiRestockAdvice || explainForecast(product, forecast)}</p>
+            {aiRestockAdvice && <p className="mt-1.5 text-[11.5px] text-[#9aa1b5]">AI suggestion from Qwen 2.5 7B, based on the forecast above.</p>}
 
             {forecast.needsReorder && (
               <div className="mt-4 rounded-2xl bg-subtle/80 p-4">

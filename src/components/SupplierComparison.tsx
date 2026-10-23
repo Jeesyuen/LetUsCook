@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Check, CircleCheck, Clock, GitCompareArrows, Sparkles, TriangleAlert } from 'lucide-react'
+import { getAIProcurementAdvice } from '@/services/runpodClient'
 import { findSupplier } from '@/data/supplierRegistry'
 import {
   categoryLabels,
@@ -159,6 +161,46 @@ export function ProcurementAdvisorPanel({
   onCompare: () => void
 }) {
   const advice = result.advice
+  const [customAdvice, setCustomAdvice] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    // Drop advice for the previous product or priority so it never shows under this one
+    setCustomAdvice(null)
+    if (!advice) return
+
+    const primary = result.rankings.find((r) => r.supplier_id === advice.primary_supplier_id)
+    if (!primary) return
+
+    const alts = result.rankings
+      .filter((r) => r.supplier_id !== advice.primary_supplier_id && r.rank !== null)
+      .slice(0, 2)
+      .map((r) => ({
+        name: r.supplier_name,
+        totalPrice: r.supplier.total_price,
+        deliveryDays: r.supplier.delivery_days,
+      }))
+
+    getAIProcurementAdvice(
+      result.product,
+      result.priority,
+      result.days_until_stockout,
+      {
+        name: primary.supplier_name,
+        totalPrice: primary.supplier.total_price,
+        deliveryDays: primary.supplier.delivery_days,
+        reliability: primary.supplier.reliability,
+      },
+      alts
+    ).then((text) => {
+      if (active && text) setCustomAdvice(text)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [advice, result])
+
   if (!advice) return null
   const u = urgencyStyle[advice.urgency]
   return (
@@ -185,7 +227,7 @@ export function ProcurementAdvisorPanel({
         </div>
       </div>
 
-      <p className="mt-4 text-[14.5px] leading-relaxed text-ink">{advice.final_recommendation}</p>
+      <p className="mt-4 text-[14.5px] leading-relaxed text-ink">{customAdvice || advice.final_recommendation}</p>
       <p className="mt-2 text-[13px] leading-relaxed text-muted">{advice.urgency_note}</p>
       {advice.warnings.length > 0 && (
         <ul className="mt-3 space-y-1.5 rounded-xl border border-[#f6e1b9] bg-warning-soft/50 px-3.5 py-2.5">
@@ -204,7 +246,10 @@ export function ProcurementAdvisorPanel({
         ))}
       </div>
       <p className="mt-4 flex items-center gap-1.5 text-[11.5px] text-[#9aa1b5]">
-        Generated from the calculated scores, supplier data and stock forecast with deterministic rules — no external AI service is called. <ScoreExplainer />
+        {customAdvice
+          ? 'Recommendation written by AI (Qwen 2.5 7B) from the calculated scores, supplier data and stock forecast. Rankings use deterministic rules.'
+          : 'Generated from the calculated scores, supplier data and stock forecast with deterministic rules — no external AI service is called.'}{' '}
+        <ScoreExplainer />
       </p>
     </div>
   )

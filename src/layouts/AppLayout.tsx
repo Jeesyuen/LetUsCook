@@ -8,6 +8,7 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   useEffect(() => {
+    document.body.style.overflow = ''
     window.scrollTo({ top: 0 })
   }, [location.pathname])
 

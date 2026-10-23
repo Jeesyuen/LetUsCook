@@ -17,6 +17,27 @@ npm test           # forecasting and supplier matching tests (Vitest)
 No backend, API keys or external services are needed. Demo state is saved in `localStorage`;
 use **Settings → Reset Demo** (or the user menu) to restore the starting scenario.
 
+## AI text with RunPod (optional)
+
+The Forecasting page and the supplier advisor can show short advice written by `Qwen/Qwen2.5-7B-Instruct`
+on **RunPod Serverless**. It only works under `npm run dev`; without it, and in production builds, the
+app shows its rule-based explanations instead. To turn it on, copy the template and fill in the RunPod
+section:
+
+```bash
+cp .env.example .env.local
+```
+
+```env
+RUNPOD_API_KEY=your_runpod_api_key_here
+VITE_RUNPOD_ENABLED=true
+VITE_RUNPOD_ENDPOINT_ID=s3yoz365sju59f
+VITE_RUNPOD_MODEL=Qwen/Qwen2.5-7B-Instruct
+```
+
+`RUNPOD_API_KEY` has no `VITE_` prefix on purpose: the Vite dev server proxy adds it to requests to
+`/api/runpod`, so the key never ends up in the browser bundle. On Replit, set these under **Tools → Secrets**.
+
 ## Backend API (optional)
 
 `main.py` is a FastAPI service over Supabase. The frontend does not call it yet.
