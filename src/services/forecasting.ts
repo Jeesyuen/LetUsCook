@@ -62,6 +62,11 @@ export function stockStatus(stock: number, safety: number, daysRemaining: number
 
 export const riskForStatus = (s: StockStatus): RiskLevel => (s === 'Critical' || s === 'Out of Stock' ? 'High' : s === 'Reorder Soon' ? 'Medium' : 'Low')
 
+/** Configured safety stock, raised to cover demand variability over the lead time when it is known. */
+export function safetyStockFor(configuredSafety: number, usageStdDev: number | null, leadTimeDays: number): number {
+  return usageStdDev === null ? configuredSafety : Math.max(configuredSafety, VARIABILITY_SERVICE_FACTOR * usageStdDev * Math.sqrt(leadTimeDays))
+}
+
 interface SupplyEvent {
   day: number
   quantity: number
@@ -124,7 +129,7 @@ export function computeForecast(
   const coverage = safeNonNegative(coverageDays)
   const multiple = safeNonNegative(p.orderMultiple, 1) || 1
   const minimumQty = safeNonNegative(minimumOrderQty)
-  const safetyStock = stdDev === null ? configuredSafety : Math.max(configuredSafety, VARIABILITY_SERVICE_FACTOR * stdDev * Math.sqrt(leadTimeDays))
+  const safetyStock = safetyStockFor(configuredSafety, stdDev, leadTimeDays)
   const reorderPoint = forecastUsage * leadTimeDays + safetyStock
   const today = Number.isFinite(asOf.getTime()) ? new Date(asOf) : startOfToday()
   today.setHours(0, 0, 0, 0)

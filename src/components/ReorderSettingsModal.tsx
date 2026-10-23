@@ -7,6 +7,7 @@ import { Input, Label, Select, Toggle } from './ui/primitives'
 import { useAppStore } from '@/store/useAppStore'
 import { useProductForecast, useSuppliers } from '@/hooks/useDerived'
 import { supplierProducts } from '@/data/mockData'
+import { safetyStockFor } from '@/services/forecasting'
 import { formatQty, formatRM, round } from '@/utils/format'
 
 export function ReorderSettingsModal({ productId, open, onClose }: { productId: string | null; open: boolean; onClose: () => void }) {
@@ -41,7 +42,8 @@ export function ReorderSettingsModal({ productId, open, onClose }: { productId: 
   const options = suppliers.filter((s) => catalogue.some((c) => c.supplierId === s.id) || s.id === product.reorder.preferredSupplierId)
   const leadN = parseFloat(lead) || 0
   const safetyN = parseFloat(safety) || 0
-  const suggestedTrigger = round(forecast.avgDailyUsage * leadN + safetyN, 1)
+  // Same formula as the forecast's reorder point, using the values being edited
+  const suggestedTrigger = round(forecast.forecastDailyUsage * leadN + safetyStockFor(safetyN, forecast.usageStdDev, leadN), 1)
   const sp = catalogue.find((c) => c.supplierId === supplierId)
   const valid = parseFloat(trigger) >= 0 && leadN > 0 && safetyN >= 0 && (useCalculated || parseFloat(qty) > 0)
 
