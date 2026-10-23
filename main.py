@@ -64,16 +64,19 @@ def get_suppliers():
     return supabase.table("suppliers").select("*").execute().data
 
 @app.get("/quotations")
-def get_quotations():
-    return supabase.table("quotations").select("*").execute().data
+def get_quotations(product_id: Optional[str] = None):
+    query = supabase.table("quotations").select("*, suppliers(name, reliability_score, quality_rating), products(name, sku)")
+    if product_id:
+        query = query.eq("product_id", product_id)
+    return query.execute().data
 
 @app.get("/purchase-orders")
 def get_purchase_orders():
-    return supabase.table("purchase_orders").select("*").execute().data
+    return supabase.table("purchase_orders").select("*, products(name, sku), suppliers(name)").order("created_at", desc=True).execute().data
 
 @app.get("/activity-logs")
 def get_activity_logs():
-    return supabase.table("activity_logs").select("*").execute().data
+    return supabase.table("activity_logs").select("*").order("created_at", desc=True).execute().data
 
 @app.post("/purchase-orders", status_code=status.HTTP_201_CREATED)
 def create_purchase_order(po: POCreate):
