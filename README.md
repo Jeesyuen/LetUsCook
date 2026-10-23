@@ -52,7 +52,7 @@ src/
 - **Days to stockout** = projected depletion under forecast daily usage with open purchase orders applied once at their expected arrival dates. A date is omitted when usage is zero.
 - **Reorder point** = forecast daily usage × supplier lead time + safety stock.
 - **Suggested quantity** = forecast usage × (lead time + configured coverage days) + safety stock − current stock − open orders expected within that window, rounded up to the order multiple. If the preferred supplier has a catalogue MOQ, a positive recommendation is raised to that minimum and rounded to the product's order multiple.
-- Risk is **Critical** when projected stockout is on or before supplier lead time, **Reorder Soon** when stock reaches its reorder point or has at most 7 extra days of cover, and **Healthy** otherwise. Open-order arrival timing is included in depletion estimates.
+- Risk is **Critical** when stock is at or below safety stock or projected stockout is on or before supplier lead time, **Reorder Soon** when stock reaches its reorder point or has at most 7 extra days of cover, and **Healthy** otherwise. Open-order arrival timing is included in depletion estimates.
 - Seeded usage history is labeled **simulated**; a new product's single entered value is labeled **baseline**, and older saved records without provenance remain **unverified**. Forecasts are deterministic decision-support estimates, not an ML model or live supplier data.
 - **Supplier compatibility** — `src/services/matching/`. Each criterion is normalised to 0–100:
   price = 100 − 3 pts per 1% above the lowest total price; delivery = (fastest + 1) ÷ (days + 1);

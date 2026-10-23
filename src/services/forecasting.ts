@@ -53,9 +53,9 @@ export function averageDailyUsage(p: Product): number {
   return h.reduce((a, b) => a + b, 0) / h.length
 }
 
-export function stockStatus(stock: number, daysRemaining: number, leadTime: number, reorderPoint: number): StockStatus {
+export function stockStatus(stock: number, safety: number, daysRemaining: number, leadTime: number, reorderPoint: number): StockStatus {
   if (stock <= 0) return 'Out of Stock'
-  if (daysRemaining <= leadTime) return 'Critical'
+  if (stock <= safety || daysRemaining <= leadTime) return 'Critical'
   if (stock <= reorderPoint || daysRemaining <= leadTime + HIGH_RISK_WARNING_DAYS) return 'Reorder Soon'
   return 'Healthy'
 }
@@ -149,7 +149,7 @@ export function computeForecast(
   const suggestedQty = fixedQty !== null
     ? applyOrderConstraints(Math.max(0, safeNonNegative(fixedQty) - incomingInHorizon))
     : calculatedQty
-  const status = stockStatus(stock, daysRemaining, leadTimeDays, reorderPoint)
+  const status = stockStatus(stock, safetyStock, daysRemaining, leadTimeDays, reorderPoint)
   const risk = riskForStatus(status)
   const trendPct = earlierWeekUsage !== null && earlierWeekUsage > 0 && recent !== null ? ((recent - earlierWeekUsage) / earlierWeekUsage) * 100 : null
   const limitation = history.length === 0
@@ -162,9 +162,11 @@ export function computeForecast(
   const riskReason = status === 'Out of Stock'
     ? `Current stock is zero or invalid ${p.unit}; replenish immediately.`
     : status === 'Critical'
-      ? events[0] && projectedDays < events[0].day
-        ? `Projected stockout in ${round(daysRemaining, 1)} days, before an open order due in ${events[0].day} days and within the ${leadTimeDays}-day supplier lead time.`
-        : `Projected stockout in ${round(daysRemaining, 1)} days, within the ${leadTimeDays}-day supplier lead time.`
+      ? stock <= safetyStock
+        ? `Current stock of ${round(stock, 1)} ${p.unit} is at or below the safety stock of ${round(safetyStock, 1)} ${p.unit}.`
+        : events[0] && projectedDays < events[0].day
+          ? `Projected stockout in ${round(daysRemaining, 1)} days, before an open order due in ${events[0].day} days and within the ${leadTimeDays}-day supplier lead time.`
+          : `Projected stockout in ${round(daysRemaining, 1)} days, within the ${leadTimeDays}-day supplier lead time.`
       : status === 'Reorder Soon'
         ? stock <= reorderPoint
           ? `Current stock is at or below the reorder point of ${round(reorderPoint, 1)} ${p.unit}.`

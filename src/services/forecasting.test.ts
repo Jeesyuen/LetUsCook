@@ -156,6 +156,15 @@ describe('computeForecast', () => {
     expect(atLeadTimeBoundary.status).toBe('Critical')
   })
 
+  it('classifies stock at or below safety stock as critical even with long cover', () => {
+    const slowMover = makeProduct({ currentStock: 4, usageHistory: Array(14).fill(0.2), reorder: { ...makeProduct().reorder, safetyStock: 5 } })
+    const forecast = computeForecast(slowMover, 7, [], AS_OF)
+
+    expect(forecast.daysRemaining).toBe(20)
+    expect(forecast.status).toBe('Critical')
+    expect(forecast.riskReason).toContain('at or below the safety stock')
+  })
+
   it('accounts for dated open orders once and identifies an order arriving after depletion', () => {
     const lateOrder = makeOrder(new Date(2026, 9, 26).toISOString(), 20)
     const forecast = computeForecast(makeProduct({ currentStock: 10, usageHistory: Array(14).fill(5) }), 7, [lateOrder], AS_OF)
