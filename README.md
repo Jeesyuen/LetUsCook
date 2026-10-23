@@ -11,7 +11,7 @@ Alpha Red Solutions — Orbyte Smart SME Challenge. The demo business is the fic
 npm install
 npm run dev        # http://localhost:5173
 npm run build      # type-check + production build
-npm test           # supplier matching engine tests (Vitest)
+npm test           # forecasting and supplier matching tests (Vitest)
 ```
 
 No backend, API keys or external services are needed. Demo state is saved in `localStorage`;
@@ -47,9 +47,13 @@ src/
 
 ## Business logic
 
-- **Days remaining** = current stock ÷ 14-day average daily usage
-- **Reorder point** = daily usage × lead time + safety stock
-- **Suggested quantity** = usage × (lead time + coverage days) + safety stock − on hand − open orders, rounded to pack size
+- **Average daily usage** = mean of valid non-negative daily usage observations. With at least 7 observations, forecast usage blends the overall mean (70%) with the latest 7-day mean (30%); with at least 14 observations, the displayed trend compares the latest 7-day mean with the preceding 7-day mean.
+- **Demand variability** = sample standard deviation when at least 7 valid observations exist. **Safety stock** is the greater of the configured safety quantity and `1.65 × standard deviation × √(supplier lead days)`; otherwise the configured safety quantity is used.
+- **Days to stockout** = projected depletion under forecast daily usage with open purchase orders applied once at their expected arrival dates. A date is omitted when usage is zero.
+- **Reorder point** = forecast daily usage × supplier lead time + safety stock.
+- **Suggested quantity** = forecast usage × (lead time + configured coverage days) + safety stock − current stock − open orders expected within that window, rounded up to the order multiple. If the preferred supplier has a catalogue MOQ, a positive recommendation is raised to that minimum and rounded to the product's order multiple.
+- Risk is **Critical** when stock is at or below safety stock or projected stockout is on or before supplier lead time, **Reorder Soon** when stock reaches its reorder point or has at most 7 extra days of cover, and **Healthy** otherwise. Open-order arrival timing is included in depletion estimates.
+- Seeded usage history is labeled **simulated**; a new product's single entered value is labeled **baseline**, and older saved records without provenance remain **unverified**. Forecasts are deterministic decision-support estimates, not an ML model or live supplier data.
 - **Supplier compatibility** — `src/services/matching/`. Each criterion is normalised to 0–100:
   price = 100 − 3 pts per 1% above the lowest total price; delivery = (fastest + 1) ÷ (days + 1);
   distance = (nearest + 10 km) ÷ (km + 10); reliability and product suitability as supplied (0–100).

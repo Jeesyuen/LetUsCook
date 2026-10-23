@@ -331,7 +331,7 @@ export function seedProductsAndMovements(): { products: Product[]; movements: In
     const usage = seed.usageOverride ?? buildUsage(seed.avg, idx + 1, !!seed.integerUsage)
     const { levels, receipts } = buildHistory(seed, usage)
     const { avg: _avg, usageOverride: _u, integerUsage: _i, ...rest } = seed
-    products.push({ ...rest, usageHistory: usage, stockHistory: levels, supplierIds: supplierIdsFor(seed.id) })
+    products.push({ ...rest, usageHistory: usage, usageHistorySource: 'simulated', stockHistory: levels, supplierIds: supplierIdsFor(seed.id) })
 
     // Movement log: receipts plus the last 5 days of POS usage
     receipts.forEach((r, n) => {

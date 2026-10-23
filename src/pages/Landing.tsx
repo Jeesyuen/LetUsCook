@@ -6,7 +6,7 @@ import { Logo } from '@/components/Logo'
 import { HeroSculpture } from '@/components/landing/HeroSculpture'
 import { ProductThumb, StockStatusBadge, SupplierLogo } from '@/components/common'
 import { ForecastChart } from '@/components/charts/ForecastChart'
-import { useForecasts, useOpenPOFor, useRiskRanking } from '@/hooks/useDerived'
+import { useForecasts, useOpenPOsFor, useRiskRanking } from '@/hooks/useDerived'
 import { buildForecastSeries } from '@/services/forecasting'
 import { buildQuotations, scoreQuotations, weightsFor } from '@/services/scoring'
 import { defaultSettings } from '@/data/mockData'
@@ -274,8 +274,8 @@ function DashboardPreview() {
   const ranking = useRiskRanking()
   const pending = useAppStore((s) => s.approvals.filter((a) => a.status === 'Pending').length)
   const top = ranking[0]
-  const openPO = useOpenPOFor(top?.product.id)
-  const series = useMemo(() => (top ? buildForecastSeries(top.product, top.forecast, openPO) : null), [top, openPO])
+  const openPOs = useOpenPOsFor(top?.product.id)
+  const series = useMemo(() => (top ? buildForecastSeries(top.product, top.forecast, openPOs) : null), [top, openPOs])
   const value = all.reduce((s, x) => s + x.product.currentStock * x.product.unitCost, 0)
   const side = [LayoutDashboard, Boxes, ChartLine, Truck, GitCompareArrows, Sparkles, ClipboardCheck, ShoppingCart]
 

@@ -1,6 +1,6 @@
 // Runtime supplier registry: seeded suppliers plus any added during the demo.
 // Pure services (scoring, communication, discovery) read from here so they don't depend on React state.
-import type { Supplier, SupplierProduct } from '@/types'
+import type { Product, Supplier, SupplierProduct } from '@/types'
 import { supplierProducts as seededProducts, suppliers as seeded } from './mockData'
 
 let custom: Supplier[] = []
@@ -21,4 +21,8 @@ export const addCustomSupplierProduct = (sp: SupplierProduct) => {
 }
 export const findSupplierProductsForProduct = (productId: string): SupplierProduct[] =>
   allSupplierProducts().filter((sp) => sp.productId === productId)
+
+/** MOQ of the product's preferred supplier, or 0 when it has none listed. */
+export const preferredSupplierMoq = (product: Product): number =>
+  findSupplierProductsForProduct(product.id).find((sp) => sp.supplierId === product.reorder.preferredSupplierId)?.moq ?? 0
 

@@ -6,6 +6,7 @@ import { explainRecommendation, type Explanation } from '@/services/explanations
 import { compareSuppliers, type RecommendationCategory, type SupplierSuggestion } from '@/services/matching'
 import { mockSuppliersFor } from '@/data/sampleSupplierData'
 import { suppliers as seededSuppliers } from '@/data/mockData'
+import { preferredSupplierMoq } from '@/data/supplierRegistry'
 import type { ApprovalRequest, Product, PurchaseOrder } from '@/types'
 
 export interface ProductWithForecast {
@@ -18,8 +19,11 @@ export function useForecasts(): ProductWithForecast[] {
   const pos = useAppStore((s) => s.purchaseOrders)
   const coverageDays = useAppStore((s) => s.settings.coverageDays)
   return useMemo(() => {
-    const incoming = (id: string) => pos.filter((p) => p.productId === id && OPEN_PO_STATUSES.includes(p.status)).reduce((sum, p) => sum + p.quantity, 0)
-    return products.map((product) => ({ product, forecast: computeForecast(product, coverageDays, incoming(product.id)) }))
+    const incoming = (id: string) => pos.filter((p) => p.productId === id && OPEN_PO_STATUSES.includes(p.status))
+    return products.map((product) => ({
+      product,
+      forecast: computeForecast(product, coverageDays, incoming(product.id), undefined, preferredSupplierMoq(product)),
+    }))
   }, [products, pos, coverageDays])
 }
 
@@ -34,9 +38,9 @@ export function useRiskRanking(): ProductWithForecast[] {
   return useMemo(() => [...all].sort((a, b) => a.forecast.coverageMargin - b.forecast.coverageMargin), [all])
 }
 
-export function useOpenPOFor(productId: string | undefined): PurchaseOrder | undefined {
+export function useOpenPOsFor(productId: string | undefined): PurchaseOrder[] {
   const pos = useAppStore((s) => s.purchaseOrders)
-  return useMemo(() => pos.find((p) => p.productId === productId && OPEN_PO_STATUSES.includes(p.status)), [pos, productId])
+  return useMemo(() => pos.filter((p) => p.productId === productId && OPEN_PO_STATUSES.includes(p.status)), [pos, productId])
 }
 
 export interface Recommendation extends ProductWithForecast {
