@@ -84,7 +84,7 @@ export function buildDiscoveredQuotation(
   sp: SupplierProduct,
   quantity: number,
   product?: Product,
-): Quotation {
+): Quotation & { landedCost: LandedCostBreakdown } {
   const supplier = findSupplier(sp.supplierId) ?? allSuppliers()[0]
   const distanceKm = getSupplierDistance(supplier)
   const landedCost = calculateLandedCost(sp.unitPrice, quantity, sp.deliveryFee, product?.unitCost)
@@ -164,7 +164,6 @@ export function discoverSuppliers(
     if (typeof maxDistanceKm === 'number' && distanceKm > maxDistanceKm) return
     if (typeof maxLeadTimeDays === 'number' && sp.leadTimeDays > maxLeadTimeDays) return
 
-    const landedCost = calculateLandedCost(sp.unitPrice, quantity, sp.deliveryFee, product?.unitCost)
     const quotation = buildDiscoveredQuotation(sp, quantity, product)
 
     discovered.push({
@@ -175,7 +174,7 @@ export function discoverSuppliers(
       distanceKm,
       meetsMoq,
       moqShortfall,
-      landedCost,
+      landedCost: quotation.landedCost,
       tags: [],
     })
   })
