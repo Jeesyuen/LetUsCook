@@ -14,18 +14,20 @@ npm run build      # type-check + production build
 npm test           # forecasting and supplier matching tests (Vitest)
 ```
 
-## Configuration & Environment Variables
+No backend, API keys or external services are needed. Demo state is saved in `localStorage`;
+use **Settings → Reset Demo** (or the user menu) to restore the starting scenario.
 
-To configure environment variables for local testing, copy the template:
+## AI text with RunPod (optional)
+
+The Forecasting page and the supplier advisor can show short advice written by `Qwen/Qwen2.5-7B-Instruct`
+on **RunPod Serverless**. It only works under `npm run dev`; without it, and in production builds, the
+app shows its rule-based explanations instead. To turn it on, copy the template and fill in the RunPod
+section:
 
 ```bash
 cp .env.example .env.local
 ```
 
-### AI Inference Configuration (RunPod Serverless)
-SupplyWise AI interfaces with an OpenAI-compatible vLLM endpoint hosted on **RunPod Serverless (NVIDIA RTX 4090)** running `Qwen/Qwen2.5-7B-Instruct`.
-
-Testers should specify their RunPod credentials in `.env.local`:
 ```env
 RUNPOD_API_KEY=your_runpod_api_key_here
 VITE_RUNPOD_ENABLED=true
@@ -34,10 +36,7 @@ VITE_RUNPOD_MODEL=Qwen/Qwen2.5-7B-Instruct
 ```
 
 `RUNPOD_API_KEY` has no `VITE_` prefix on purpose: the Vite dev server proxy adds it to requests to
-`/api/runpod`, so the key never ends up in the browser bundle.
-*(On hosted environments like Replit, configure these credentials under **Tools → Secrets**).*
-
-State is synchronized in `localStorage`; use **Settings → Reset Demo** (or the user menu) to restore the starting scenario at any time.
+`/api/runpod`, so the key never ends up in the browser bundle. On Replit, set these under **Tools → Secrets**.
 
 ## Backend API (optional)
 
