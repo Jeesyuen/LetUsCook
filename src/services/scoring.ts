@@ -57,18 +57,25 @@ export function buildQuotations(productId: string, quantity: number, excludeSupp
   const catalogue = allSupplierProducts()
   const matching = catalogue.filter((sp) => sp.productId === productId && !excludeSupplierIds.includes(sp.supplierId))
 
-  const minCost = matching.length > 0 ? Math.min(...matching.map((sp) => sp.unitPrice * quantity + sp.deliveryFee)) : 0
-  const minDays = matching.length > 0 ? Math.min(...matching.map((sp) => sp.leadTimeDays)) : 0
-  const minDistance = matching.length > 0 ? Math.min(...matching.map((sp) => getSupplierDistance(getSupplier(sp.supplierId)))) : 0
-
-  return matching.map((sp) => {
+  const quotesWithCost = matching.map((sp) => {
     const supplier = getSupplier(sp.supplierId)
     const distanceKm = getSupplierDistance(supplier)
     const landedCost = calculateLandedCost(sp.unitPrice, quantity, sp.deliveryFee)
     const meetsMoq = quantity >= sp.moq
+    return { sp, supplier, distanceKm, landedCost, meetsMoq }
+  })
 
+  const fulfillable = quotesWithCost.filter((q) => q.meetsMoq)
+  const costPool = fulfillable.length > 0 ? fulfillable : quotesWithCost
+
+  const minCost = costPool.length > 0 ? Math.min(...costPool.map((q) => q.landedCost.totalLandedCost)) : 0
+  const minDays = matching.length > 0 ? Math.min(...matching.map((sp) => sp.leadTimeDays)) : 0
+  const minDistance = matching.length > 0 ? Math.min(...matching.map((sp) => getSupplierDistance(getSupplier(sp.supplierId)))) : 0
+
+  return quotesWithCost.map(({ sp, supplier, distanceKm, landedCost, meetsMoq }) => {
     const tags: ('cheapest' | 'nearest' | 'fastest' | 'best-value')[] = []
-    if (landedCost.totalLandedCost === minCost) tags.push('cheapest')
+    const isEligibleForCheapest = fulfillable.length > 0 ? meetsMoq : true
+    if (isEligibleForCheapest && landedCost.totalLandedCost === minCost) tags.push('cheapest')
     if (sp.leadTimeDays === minDays) tags.push('fastest')
     if (distanceKm === minDistance) tags.push('nearest')
 

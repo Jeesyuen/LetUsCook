@@ -121,12 +121,14 @@ export function discoverSuppliers(
 ): DiscoveredSupplierQuote[] {
   const { productId, query: searchStr, category, quantity = 1, maxDistanceKm, maxLeadTimeDays, mustMeetMoq = false } = query
 
+  const hasFilter = Boolean(productId || (category && category.trim().length > 0) || (searchStr && searchStr.trim().length > 0))
+
   // 1. Identify relevant products matching ID, category, or search keywords
   const matchedProducts = allProducts.filter((p) => {
     if (productId && p.id === productId) return true
     if (category && p.category.toLowerCase() === category.toLowerCase()) return true
     if (searchStr && searchStr.trim().length > 0) {
-      const q = searchStr.toLowerCase()
+      const q = searchStr.toLowerCase().trim()
       return (
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
@@ -134,15 +136,20 @@ export function discoverSuppliers(
         p.category.toLowerCase().includes(q)
       )
     }
-    return !productId && !category && !searchStr
+    return !hasFilter
   })
+
+  // If a search or category filter was applied but matched no products, return empty results
+  if (hasFilter && matchedProducts.length === 0) {
+    return []
+  }
 
   const matchedProductIds = new Set(matchedProducts.map((p) => p.id))
   const catalogue = allSupplierProducts()
 
   // 2. Filter supplier catalogue items
   const candidates = catalogue.filter((sp) => {
-    if (matchedProductIds.size > 0 && !matchedProductIds.has(sp.productId)) return false
+    if (hasFilter && !matchedProductIds.has(sp.productId)) return false
     return true
   })
 
@@ -202,7 +209,8 @@ export function tagComparisonHighlights(quotes: DiscoveredSupplierQuote[]): Disc
 
   quotes.forEach((q) => {
     const tags: ('cheapest' | 'nearest' | 'fastest' | 'best-value')[] = []
-    if (q.landedCost.totalLandedCost === minCost) tags.push('cheapest')
+    const isEligibleForCheapest = fulfillable.length > 0 ? q.meetsMoq : true
+    if (isEligibleForCheapest && q.landedCost.totalLandedCost === minCost) tags.push('cheapest')
     if (q.distanceKm === minDistance) tags.push('nearest')
     if (q.quotation.leadTimeDays === minLeadTime) tags.push('fastest')
     if (q.meetsMoq && q.landedCost.costVariance !== undefined && q.landedCost.costVariance <= 0) {
