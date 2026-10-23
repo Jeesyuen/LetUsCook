@@ -26,9 +26,10 @@ const ENDPOINT_ID = import.meta.env.VITE_RUNPOD_ENDPOINT_ID || 's3yoz365sju59f'
 const DEFAULT_MODEL = (import.meta.env.VITE_RUNPOD_MODEL || 'qwen/qwen2.5-7b-instruct').toLowerCase()
 
 // The API key lives in the dev server proxy (RUNPOD_API_KEY in vite.config.ts), never in the browser.
-// VITE_RUNPOD_ENABLED only switches the AI text on.
+// VITE_RUNPOD_ENABLED only switches the AI text on. The proxy exists only under `npm run dev`,
+// so production builds always use the rule-based text.
 export function isRunPodConfigured(): boolean {
-  return import.meta.env.VITE_RUNPOD_ENABLED === 'true'
+  return import.meta.env.DEV && import.meta.env.VITE_RUNPOD_ENABLED === 'true'
 }
 
 export async function callRunPodChat({
