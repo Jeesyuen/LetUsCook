@@ -48,12 +48,12 @@ export default function Forecasting() {
 
   useEffect(() => {
     let active = true
+    // Drop the previous product's advice so it never shows under this one
+    setAiRestockAdvice(null)
     if (p && f?.needsReorder) {
       getAIRestockAdvice(p.name, p.unit, p.currentStock, f.avgDailyUsage, f.daysRemaining, f.suggestedQty, f.leadTimeDays).then((text) => {
         if (active && text) setAiRestockAdvice(text)
       })
-    } else {
-      setAiRestockAdvice(null)
     }
     return () => {
       active = false

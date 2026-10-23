@@ -165,6 +165,8 @@ export function ProcurementAdvisorPanel({
 
   useEffect(() => {
     let active = true
+    // Drop advice for the previous product or priority so it never shows under this one
+    setCustomAdvice(null)
     if (!advice) return
 
     const primary = result.rankings.find((r) => r.supplier_id === advice.primary_supplier_id)
