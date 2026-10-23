@@ -117,6 +117,10 @@ def approve_purchase_order(po_id: str, body: POApprove):
     if not po.data:
         raise HTTPException(status_code=404, detail=f"Purchase order '{po_id}' not found")
 
+    current_status = po.data[0]["status"]
+    if current_status not in ("Draft", "Pending"):
+        raise HTTPException(status_code=409, detail=f"Purchase order '{po_id}' is already {current_status}")
+
     res = supabase.table("purchase_orders").update({
         "status": "Approved",
         "approved_by": body.approver_name
