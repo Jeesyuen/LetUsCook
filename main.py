@@ -10,9 +10,12 @@ load_dotenv()
 
 app = FastAPI(title="SupplyWise AI API")
 
+# Comma-separated list of frontend origins allowed to call the API
+FRONTEND_ORIGINS = [o.strip() for o in os.getenv("FRONTEND_ORIGINS", "http://localhost:5173").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
