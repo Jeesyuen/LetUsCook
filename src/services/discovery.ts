@@ -121,22 +121,16 @@ export function discoverSuppliers(
 ): DiscoveredSupplierQuote[] {
   const { productId, query: searchStr, category, quantity = 1, maxDistanceKm, maxLeadTimeDays, mustMeetMoq = false } = query
 
-  const hasFilter = Boolean(productId || (category && category.trim().length > 0) || (searchStr && searchStr.trim().length > 0))
+  const cat = category?.trim().toLowerCase()
+  const q = searchStr?.trim().toLowerCase()
+  const hasFilter = Boolean(productId || cat || q)
 
-  // 1. Identify relevant products matching ID, category, or search keywords
+  // 1. Identify relevant products matching every given filter (ID, category and search keywords)
   const matchedProducts = allProducts.filter((p) => {
-    if (productId && p.id === productId) return true
-    if (category && p.category.toLowerCase() === category.toLowerCase()) return true
-    if (searchStr && searchStr.trim().length > 0) {
-      const q = searchStr.toLowerCase().trim()
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-      )
-    }
-    return !hasFilter
+    if (productId && p.id !== productId) return false
+    if (cat && p.category.toLowerCase() !== cat) return false
+    if (q && ![p.name, p.sku, p.description, p.category].some((field) => field.toLowerCase().includes(q))) return false
+    return true
   })
 
   // If a search or category filter was applied but matched no products, return empty results

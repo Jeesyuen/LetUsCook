@@ -27,6 +27,14 @@ describe('Track 03A: discovery & scoring bug fixes', () => {
       }
     })
 
+    it('requires every filter to match when category and search query are combined', () => {
+      const results = discoverSuppliers({ category: 'Dairy', query: 'oat' }, products)
+      expect(results.length).toBeGreaterThan(0)
+      for (const quote of results) {
+        expect(quote.product?.id).toBe('p-oat')
+      }
+    })
+
     it('returns all suppliers when no search query or filter is provided', () => {
       const results = discoverSuppliers({}, products)
       expect(results.length).toBeGreaterThan(0)
