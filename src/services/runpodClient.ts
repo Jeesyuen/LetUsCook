@@ -51,7 +51,8 @@ export async function callRunPodChat({
 
   try {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 8000)
+    // Serverless cold starts can take most of a minute; the rule-based text shows meanwhile
+    const timeout = setTimeout(() => controller.abort(), 60_000)
 
     const res = await fetch(url, {
       method: 'POST',
