@@ -183,6 +183,16 @@ describe('computeForecast', () => {
     expect(forecast.incoming).toBe(20)
   })
 
+  it('pushes the reorder date back when an open order arrives before the reorder point', () => {
+    const order = makeOrder(new Date(2026, 9, 26).toISOString(), 20)
+    const withoutOrder = computeForecast(makeProduct(), 7, [], AS_OF)
+    const withOrder = computeForecast(makeProduct(), 7, [order], AS_OF)
+
+    expect(withoutOrder.daysUntilReorder).toBe(10)
+    expect(withOrder.daysUntilReorder).toBe(20)
+    expect(withOrder.reorderDate.getDate()).toBe(12)
+  })
+
   it('reduces a fixed reorder quantity by eligible incoming stock and respects lead time', () => {
     const order = makeOrder(new Date(2026, 9, 25).toISOString(), 4)
     const product = makeProduct({

@@ -82,18 +82,19 @@ function supplyEvents(orders: PurchaseOrder[], asOf: Date): SupplyEvent[] {
   }).sort((a, b) => a.day - b.day)
 }
 
-function projectedStockoutDays(stock: number, usage: number, events: SupplyEvent[]): number {
+/** Days until projected stock falls to `level`, with open orders added on their arrival day. */
+function projectedDaysUntil(level: number, stock: number, usage: number, events: SupplyEvent[]): number {
   if (usage <= 0) return Infinity
-  if (stock <= 0) return 0
+  if (stock <= level) return 0
   let remaining = stock
   let elapsed = 0
   for (const event of events) {
     const demand = usage * (event.day - elapsed)
-    if (remaining < demand) return elapsed + remaining / usage
-    remaining = Math.max(0, remaining - demand) + event.quantity
+    if (remaining - demand < level) return elapsed + (remaining - level) / usage
+    remaining = remaining - demand + event.quantity
     elapsed = event.day
   }
-  return elapsed + remaining / usage
+  return elapsed + (remaining - level) / usage
 }
 
 /**
@@ -132,9 +133,9 @@ export function computeForecast(
   if (typeof incoming === 'number' && safeNonNegative(incoming) > 0) {
     events.unshift({ day: 0, quantity: safeNonNegative(incoming) })
   }
-  const projectedDays = projectedStockoutDays(stock, forecastUsage, events)
+  const projectedDays = projectedDaysUntil(0, stock, forecastUsage, events)
   const daysRemaining = Number.isFinite(projectedDays) ? projectedDays : INFINITE_DAYS
-  const daysUntilReorder = forecastUsage > 0 ? Math.max(0, (stock - reorderPoint) / forecastUsage) : Infinity
+  const daysUntilReorder = projectedDaysUntil(reorderPoint, stock, forecastUsage, events)
   const horizonDays = leadTimeDays + coverage
   const incomingInHorizon = events.reduce((sum, event) => sum + (event.day <= horizonDays ? event.quantity : 0), 0)
   const incomingInExposureWindow = events.reduce((sum, event) => sum + (event.day <= leadTimeDays + EXPOSURE_BUFFER_DAYS ? event.quantity : 0), 0)
