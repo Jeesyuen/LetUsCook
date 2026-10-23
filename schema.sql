@@ -3,9 +3,9 @@ CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     sku TEXT UNIQUE NOT NULL,
-    stock_quantity INT NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
+    stock_quantity NUMERIC(12, 3) NOT NULL DEFAULT 0 CHECK (stock_quantity >= 0),
     unit_price NUMERIC(10, 2) NOT NULL CHECK (unit_price >= 0),
-    reorder_level INT DEFAULT 10,
+    reorder_level NUMERIC(12, 3) DEFAULT 10,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-    quantity INT NOT NULL CHECK (quantity > 0),
+    quantity NUMERIC(12, 3) NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(10, 2) NOT NULL CHECK (unit_price >= 0),
     total_amount NUMERIC(10, 2) NOT NULL,
     status TEXT DEFAULT 'Draft' CHECK (status IN ('Draft', 'Pending', 'Approved', 'Rejected')),

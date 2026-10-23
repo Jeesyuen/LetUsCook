@@ -38,12 +38,12 @@ app.add_middleware(
 
 class StockUpdate(BaseModel):
     product_id: UUID
-    quantity_change: int
+    quantity_change: float
 
 class POCreate(BaseModel):
     supplier_id: UUID
     product_id: UUID
-    quantity: int = Field(..., gt=0, description="Quantity must be greater than 0")
+    quantity: float = Field(..., gt=0, description="Quantity must be greater than 0")
     unit_price: float = Field(..., gt=0, description="Unit price must be greater than 0")
     created_by: Optional[str] = "Staff"
 
@@ -144,7 +144,7 @@ def update_stock(data: StockUpdate):
         raise HTTPException(status_code=404, detail=f"Product '{data.product_id}' not found")
 
     current_stock = prod.data[0]["stock_quantity"]
-    new_stock = current_stock + data.quantity_change
+    new_stock = round(float(current_stock) + data.quantity_change, 3)
 
     if new_stock < 0:
         raise HTTPException(status_code=400, detail=f"Insufficient stock. Current: {current_stock}, requested reduction: {abs(data.quantity_change)}")
