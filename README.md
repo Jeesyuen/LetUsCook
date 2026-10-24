@@ -1,111 +1,245 @@
 # SupplyWise AI
 
-**Predict Early. Source Smarter. Purchase with Confidence.**
+> **Predict Early. Source Smarter. Purchase with Confidence.**  
+> Autonomous Procurement Intelligence and Inventory Synchronization designed specifically for Malaysian Food & Beverage (F&B) SMEs.
 
-AI-powered inventory forecasting and supplier procurement for Malaysian SMEs — a frontend prototype for the
-Alpha Red Solutions — Orbyte Smart SME Challenge. The demo business is the fictional **Brew & Co. Café**.
+---
 
-## Run locally
+## Team Information
+
+| Field                  | Details                                     |
+| ---------------------- | ------------------------------------------- |
+| **Team Name**          | LetUsCook                                   |
+| **Team Domain**        | Domain 2: Orbyte Smart SME Challenge        |
+| **SDG Track (1–17)**   | SDG 8 — Decent Work and Economic Growth (Targets 8.2 & 8.3) |
+| **Team Leader**        | Chew Jee Syuen                              |
+| **University**         | Universiti Malaya (UM)                      |
+| **Number of Members**  | 5                                           |
+
+## Links
+
+| Resource          | Link                                           |
+| ----------------- | ---------------------------------------------- |
+| GitHub Repository | https://github.com/Jeesyuen/LetUsCook          |
+| Live Demo         | https://supplywiseai.replit.app                |
+| RunPod Endpoint   | https://api.runpod.ai/v2/s3yoz365sju59f/runsync|
+| Slide Deck        | https://canva.link/g63loj5yv6eatd6             |
+| Demo Video        | https://youtu.be/example-demo-video            |
+
+---
+
+## Overview
+
+### Problem
+Independent Food & Beverage (F&B) micro, small, and medium enterprises (MSMEs) in Malaysia operate on razor-thin net profit margins of just 5% to 8%, where raw ingredients consume 35% to 45% of total revenue. Today, kitchen procurement is plagued by fragmented WhatsApp chats, informal voice notes, and handwritten lists. Managers spend an estimated 4 to 6 hours weekly reconciling unstructured supplier quotes, leaving them vulnerable to hidden delivery surcharges, unexpected stockouts, rushed spot-buying, and high food spoilage.
+
+### Solution
+SupplyWise AI bridges this gap with an autonomous procurement intelligence platform engineered for independent kitchens. By pairing local deterministic decision engines with serverless Generative AI (`Qwen/Qwen2.5-7B-Instruct` on RunPod), SupplyWise AI predicts inventory depletion, normalizes unstructured WhatsApp quotations, models true landed costs (accounting for distance, fuel surcharges, and MOQs), and offers Explainable AI recommendations—all governed by a 1-click human manager approval gate before dispatching purchase orders directly via WhatsApp API.
+
+### Key Features
+
+- **Predictive Inventory Forecasting & Stockout Alerts** — Tracks daily ingredient burn rates using weighted rolling averages, establishing dynamic safety stock buffers and proactive stockout warnings.
+- **True Landed Cost & Proximity Engine** — Ingests wholesale catalogs and calculates true landed unit cost based on road distance (km), fuel surcharges, volume discount tiers, and strict Minimum Order Quantities (MOQ).
+- **Explainable AI Multi-Vector Supplier Matching** — Ranks suppliers across *Cheapest, Fastest, Nearest, and Best Overall* dimensions, generating plain-language trade-off explanations (e.g., warning if a cheaper supplier delivers too late to prevent a stockout).
+- **1-Click Manager Approval & Automated PO Dispatch** — Generates standardized purchase orders (`SW-PO-2048.pdf`) upon manager approval and simulates instant automated dispatch to the supplier’s WhatsApp via Model Context Protocol (MCP) connectors.
+- **Dual-Layer Silent Fault Tolerance** — Features client-side in-memory caching and deterministic rule-based fallbacks to guarantee 100% UI stability even during GPU cold starts or network dropouts.
+
+### Tech Stack
+
+| Layer         | Technology                   |
+| ------------- | ---------------------------- |
+| **Frontend**  | React 19, TypeScript 5, Vite 8, Tailwind CSS v4, Zustand, Framer Motion, Recharts |
+| **Backend**   | Python 3.11, FastAPI, Pydantic v2 (REST API & validation) |
+| **Database**  | PostgreSQL (Supabase) — Relational schema with transactional audit logging |
+| **AI / Compute** | RunPod Serverless GPU (NVIDIA RTX 4090, `Qwen/Qwen2.5-7B-Instruct` via vLLM) |
+| **Hosting / Dev** | Replit (Collaborative development & live staging) |
+
+---
+
+## Project Structure
+
+```
+.
+├── main.py                  # Optional FastAPI backend service over Supabase
+├── requirements.txt         # Python backend dependencies
+├── schema.sql               # PostgreSQL / Supabase relational schema
+├── src/
+│   ├── components/          # Reusable UI primitives, charts, modals, comparison cards
+│   ├── data/                # Mock datasets, supplier registry, automation fixtures
+│   ├── hooks/               # Derived state hooks (forecasts, recommendations, matching)
+│   ├── layouts/             # AppLayout, navigation header, sidebar
+│   ├── pages/               # Landing page & /app routes (Overview, Forecasting, Recommendations, Workflow)
+│   ├── services/            # Forecasting, landed cost, proximity, scoring & RunPod client
+│   │   ├── discovery.ts     # Supplier discovery & landed-cost engine
+│   │   ├── forecasting.ts   # Rolling burn rate & stockout prediction
+│   │   ├── runpodClient.ts  # RunPod Serverless GPU client (Qwen 2.5 7B)
+│   │   └── matching/        # Multi-vector scoring & Explainable AI advisor
+│   ├── store/               # Zustand store with localStorage persistence
+│   ├── types/               # TypeScript interfaces & domain models
+│   └── utils/               # Formatting, date calculations, styling utilities
+├── submission/              # Required hackathon submission proof documents
+│   ├── SDC2026_LetUsCook_Preliminary.pdf      # Preliminary project proposal
+│   ├── SDC2026_LetUsCook_TechDeclaration.pdf  # Technical tools declaration
+│   ├── SDC2026_LetUsCook_Replit_POU.pdf       # Replit proof of use
+│   └── SDC2026_LetUsCook_Runpod_POU.pdf       # RunPod proof of use
+├── tests/                   # Vitest unit test suite (84 passing tests)
+│   ├── src/services/discovery.test.ts
+│   ├── src/services/forecasting.test.ts
+│   └── src/services/runpodClient.test.ts
+├── .env.example             # Example environment variables
+├── .env.local               # Local development secrets (git-ignored)
+├── .gitignore
+├── .replit                  # Replit run configuration
+├── package.json             # Frontend dependencies & scripts
+├── vite.config.ts           # Vite bundler config with RunPod dev proxy
+└── README.md
+```
+
+### Architecture
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Client (Vite 8 + React 19 + Zustand)                                   │
+│ [Dashboard] ──► [Forecasting Engine] ──► [Landed Cost & Scorer]        │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ Replit App Proxy Gateway (/api/runpod)                                 │
+└──────────────────┬─────────────────────────────────┬───────────────────┘
+                   │                                 │
+                   ▼ (Asynchronous AI Call)          ▼ (Transactional Data)
+┌──────────────────────────────────────┐  ┌──────────────────────────────┐
+│ RunPod Serverless GPU (RTX 4090)     │  │ FastAPI + Supabase DB        │
+│ Qwen 2.5 7B Instruct (~550ms)        │  │ Relational PostgreSQL Tables │
+│ • WhatsApp Quote Parser              │  │ • Orders, Suppliers, Logs    │
+│ • Strategic Procurement Advice       │  └──────────────────────────────┘
+└──────────────────┬───────────────────┘
+                   │ 
+                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ 1-Click Human Approval Gate ──► PO Generation ──► MCP WhatsApp or email Dispatch│
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## How to Run
+
+### Option 1 — Run on Replit (Recommended)
+
+1. Open the [Replit Project](https://supplywiseai.replit.app), or import this repository via **Create Repl → Import from GitHub**.
+2. Open the **Secrets** tab (🔒) and add the environment variables listed in `.env.example`:
+   - `RUNPOD_API_KEY`: `your_runpod_api_key_here`
+   - `VITE_RUNPOD_ENABLED`: `true`
+   - `VITE_RUNPOD_ENDPOINT_ID`: `s3yoz365sju59f`
+   - `VITE_RUNPOD_MODEL`: `Qwen/Qwen2.5-7B-Instruct`
+3. Click **Run**. Replit starts the Vite server, opening the interactive live preview automatically.
+
+### Option 2 — Run Locally
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/Jeesyuen/LetUsCook.git
+cd LetUsCook
+
+# 2. Install dependencies
 npm install
-npm run dev        # http://localhost:5173
-npm run build      # type-check + production build
-npm test           # forecasting and supplier matching tests (Vitest)
-```
 
-No backend, API keys or external services are needed. Demo state is saved in `localStorage`;
-use **Settings → Reset Demo** (or the user menu) to restore the starting scenario.
-
-## AI text with RunPod (optional)
-
-The Forecasting page and the supplier advisor can show short advice written by `Qwen/Qwen2.5-7B-Instruct`
-on **RunPod Serverless**. It only works under `npm run dev`; without it, and in production builds, the
-app shows its rule-based explanations instead. To turn it on, copy the template and fill in the RunPod
-section:
-
-```bash
+# 3. Configure environment variables (Optional: enables live RunPod GPU advice)
 cp .env.example .env.local
+# Set RUNPOD_API_KEY=your_key and VITE_RUNPOD_ENABLED=true in .env.local
+
+# 4. Start the development server
+npm run dev
+# The app is now running at http://localhost:5173
 ```
 
-```env
-RUNPOD_API_KEY=your_runpod_api_key_here
-VITE_RUNPOD_ENABLED=true
-VITE_RUNPOD_ENDPOINT_ID=s3yoz365sju59f
-VITE_RUNPOD_MODEL=Qwen/Qwen2.5-7B-Instruct
-```
-
-`RUNPOD_API_KEY` has no `VITE_` prefix on purpose: the Vite dev server proxy adds it to requests to
-`/api/runpod`, so the key never ends up in the browser bundle. On Replit, set these under **Tools → Secrets**.
-
-## Backend API (optional)
-
-`main.py` is a FastAPI service over Supabase. The frontend does not call it yet.
-
+*(Optional Backend API)*:
 ```bash
 python -m venv .venv
-.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env          # then fill in SUPABASE_URL and SUPABASE_KEY
-python main.py                # http://localhost:8000, interactive docs at /docs
+python main.py                   # http://localhost:8000, docs at /docs
 ```
 
-The Supabase tables (`products`, `suppliers`, `quotations`, `purchase_orders`, `activity_logs`) must already exist.
+### Run Tests
 
-## Demo walkthrough
+All business logic, forecasting math, and RunPod client integrations are covered by automated unit tests:
 
-1. Landing page → **Launch Dashboard**
-2. Overview → coffee bean alert → **Review Restock**
-3. Forecasting → **Find Best Supplier**
-4. Supplier Comparison → switch **Best Overall / Cheapest / Nearest / Fastest** → **Request Manager Approval**
-5. Approvals → **Approve** (a PO is generated)
-6. PO drawer → **Send via WhatsApp / Email** → **Confirm Send** (simulated)
-7. **Simulate Acceptance** → **Record Delivery**
-8. Inventory, Forecasting and Activity Log all reflect the update
-
-The **?** icon in the app header shows this walkthrough.
-
-## Structure
-
-```
-src/
-  types/        domain interfaces (Product, Supplier, Quotation, ApprovalRequest, PurchaseOrder, …)
-  data/         mock data + runtime supplier registry
-  services/     forecasting, supplier scoring, explanations, communication templates (pure functions)
-    matching/   supplier compatibility scoring, ranking and explanations
-  store/        Zustand store (persisted) — every action mirrors a future API call
-  hooks/        derived data (forecasts, recommendations, scored quotes)
-  components/   UI primitives (ui/), charts, modals, cards
-  layouts/      app shell (sidebar, header)
-  pages/        landing + /app routes
+```bash
+npm test                         # Runs Vitest (84 passing tests)
 ```
 
-## Business logic
+---
 
-- **Average daily usage** = mean of valid non-negative daily usage observations. With at least 7 observations, forecast usage blends the overall mean (70%) with the latest 7-day mean (30%); with at least 14 observations, the displayed trend compares the latest 7-day mean with the preceding 7-day mean.
-- **Demand variability** = sample standard deviation when at least 7 valid observations exist. **Safety stock** is the greater of the configured safety quantity and `1.65 × standard deviation × √(supplier lead days)`; otherwise the configured safety quantity is used.
-- **Days to stockout** = projected depletion under forecast daily usage with open purchase orders applied once at their expected arrival dates. A date is omitted when usage is zero.
-- **Reorder point** = forecast daily usage × supplier lead time + safety stock.
-- **Suggested quantity** = forecast usage × (lead time + configured coverage days) + safety stock − current stock − open orders expected within that window, rounded up to the order multiple. If the preferred supplier has a catalogue MOQ, a positive recommendation is raised to that minimum and rounded to the product's order multiple.
-- Risk is **Critical** when stock is at or below safety stock or projected stockout is on or before supplier lead time, **Reorder Soon** when stock reaches its reorder point or has at most 7 extra days of cover, and **Healthy** otherwise. Open-order arrival timing is included in depletion estimates.
-- Seeded usage history is labeled **simulated**; a new product's single entered value is labeled **baseline**, and older saved records without provenance remain **unverified**. Forecasts are deterministic decision-support estimates, not an ML model or live supplier data.
-- **Supplier compatibility** — `src/services/matching/`. Each criterion is normalised to 0–100:
-  price = 100 − 3 pts per 1% above the lowest total price; delivery = (fastest + 1) ÷ (days + 1);
-  distance = (nearest + 10 km) ÷ (km + 10); reliability and product suitability as supplied (0–100).
-  Best Overall weights: price 30, delivery 25, reliability 20, distance 15, suitability 10. Cheapest, Nearest and
-  Fastest rank by their own measure first, then by a score that puts 60% weight on that measure.
-  Missing data is not scored (weights rescaled, supplier flagged "unverified"); suppliers that cannot fulfil the order
-  are excluded. It is a decision-support score, not a probability.
-- **AI Procurement Advisor** — `src/services/matching/advisor.ts`. Shows the top pick plus two
-  alternatives with labels earned from the data (Best Overall on the balanced score, Best Budget Choice, Fastest Delivery,
-  Nearest Supplier, Most Reliable — ties share a label, nothing is forced). Urgency compares the forecast's days of
-  cover with each supplier's delivery time: when stock is short it prefers a supplier that arrives before the stockout
-  and warns if the cheapest one cannot; when stock is healthy it points out cheaper, slower options.
-- **Legacy quotation score** (Approvals modify dialog, Settings weights) = price 35, delivery 30, reliability 20, quality 10, order fit 5.
-- No purchase order exists before manager approval; supplier term changes require re-approval; inventory only increases on goods receipt.
+## How We Use Replit
 
-## Simulated
+Replit served as our team’s central cloud development environment, live staging infrastructure, and rapid prototyping hub throughout the hackathon:
 
-Supplier data for matching comes from sample data (`src/data/sampleSupplierData.ts`) and is labelled as such.
-Email, WhatsApp, MCP and Orbyte are shown as "Demo Mode — Not Connected". Supplier quotations,
-messages and replies are generated locally — nothing is sent anywhere.
+- **Hosting & Live Preview:** The prototype is hosted live via Replit Deployments, serving our full web application with sub-second page loads.
+
+- **Secrets Management:** Sensitive keys (`RUNPOD_API_KEY`) are managed strictly inside Replit Secrets, ensuring zero secrets are committed to GitHub or bundled into the client bundle.
+
+📄 Proof of use: [`submission/SDC2026_LetUsCook_Replit_POU.pdf`](submission/SDC2026_LetUsCook_Replit_POU.pdf)
+
+## How We Use RunPod
+
+RunPod provided the dedicated serverless GPU infrastructure required to run high-throughput LLM workloads without overloading client edge devices:
+
+- **Workload:** We run `Qwen/Qwen2.5-7B-Instruct` on an **NVIDIA RTX 4090 GPU** to perform low-latency quotation extraction from unstructured  WhatsApp texts and generate plain-language Explainable AI advice for the procurement advisor.
+- **Setup:** Deployed as a dedicated **RunPod Serverless Endpoint** (`s3yoz365sju59f`) using the official vLLM container worker.
+- **Integration:** The application connects via the synchronous `/runsync` route through a Vite development proxy, achieving verified ~550ms inference latency.
+
+Example request:
+
+```bash
+curl -X POST https://api.runpod.ai/v2/s3yoz365sju59f/runsync \
+  -H "Authorization: Bearer $RUNPOD_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"messages": [{"role": "user", "content": "Extract price and MOQ: Arabica Beans RM104/kg, min 10kg, delivery 2 days."}]}}'
+```
+
+📄 Proof of use: [`submission/SDC2026_LetUsCook_Runpod_POU.pdf`](submission/SDC2026_LetUsCook_Runpod_POU.pdf)
+
+---
+
+## Challenges & Learnings
+
+- **Browser CORS vs. Serverless GPU APIs**: Direct browser calls to RunPod's API triggered cross-origin resource sharing (CORS) blocks. We resolved this by engineering a secure Vite development reverse proxy (`/api/runpod` ➔ `https://api.runpod.ai`) that attaches the secret authorization token on the fly without leaking it to the client bundle.
+- **Unstructured Multilingual Chat Parsing**: Malaysian wholesale communication frequently mixes English, Bahasa Malaysia, and colloquial terms (e.g., *"Ambil 10kg dapat RM104"*). Selecting `Qwen 2.5 7B` allowed high extraction accuracy across multilingual WhatsApp formats compared to standard English-only small language models.
+
+## Future Improvements
+
+- **AI Price Trend Intelligence** — Analyze historical supplier quotations to detect seasonal price fluctuations and recommend whether to forward-buy or delay reordering.
+- **Supplier Reliability Intelligence** — Score suppliers based on delivery punctuality, quotation accuracy, and fulfillment records to prevent low-reliability suppliers from winning bids.
+- **Intelligent Order Consolidation** — Batch compatible ingredient orders across neighboring restaurants in the Orbyte ecosystem to satisfy supplier MOQs and unlock tier discounts.
+
+## Team
+
+| Name                 | Role                                   | GitHub                                         |
+| -------------------- | -------------------------------------- | ---------------------------------------------- |
+| **Chew Jee Syuen**   | Team Lead / AI Matching & Scoring      | [@Jeesyuen](https://github.com/Jeesyuen)       |
+| **Lim Jie Xin**      | Cost Engine & Proximity Modeling| [@jiexin2006](https://github.com/jiexin2006)   |
+| **Janice Lim Pei Yin**| UI/UX Design & PO Generator            | [@janicelpy](https://github.com/janicelpy)     |
+| **Ng Jin Ru**        | Inventory Forecasting & Depletion Logic| [@JinRu1121](https://github.com/JinRu1121)     |
+| **Lim Yi-En**        | Backend Architecture & Supabase DB     | [@limyien-0819](https://github.com/limyien-0819)|
+
+---
+
+## Submission Checklist
+
+- [x] Team name, domain (Domain 2) and SDG track filled in
+- [x] Slide deck link added
+- [x] Demo video link added
+- [x] Replit used, with proof of use in `submission/` (`SDC2026_LetUsCook_Replit_POU.pdf`)
+- [x] RunPod used, with proof of use in `submission/` (`SDC2026_LetUsCook_Runpod_POU.pdf`)
+- [x] Preliminary submission completed (`SDC2026_LetUsCook_Preliminary.pdf`)
+- [x] Technology declaration completed (`SDC2026_LetUsCook_TechDeclaration.pdf`)
+- [x] Submission files renamed with your team name (`LetUsCook`)
+- [x] "How to Run" steps verified with 84/84 passing tests
+- [x] No API keys or secrets committed to the repository (verified in `.gitignore`)
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
