@@ -24,7 +24,7 @@
 | Live Demo         | https://supplywiseai.replit.app                |
 | RunPod Endpoint   | https://api.runpod.ai/v2/s3yoz365sju59f/runsync|
 | Slide Deck        | https://canva.link/g63loj5yv6eatd6             |
-| Demo Video        | https://youtu.be/example-demo-video            |
+| Demo Video        | https://www.youtube.com/watch?v=Rb5VCcXFH2k    |
 
 ---
 
